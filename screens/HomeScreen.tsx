@@ -38,7 +38,7 @@ export default function HomeScreen({ navigation }: any) {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <View>
+      <View style={styles.headerContent}>
         <Text style={styles.headerGreeting}>Announcements</Text>
         <Text style={styles.headerSubtitle}>Stay updated with latest news</Text>
       </View>
@@ -96,7 +96,8 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: Colors.primary,
-    paddingVertical: Spacing.lg,
+    paddingTop: 0,
+    paddingBottom: 0,
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.sm,
     borderBottomLeftRadius: Radius.xl,
@@ -105,11 +106,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...Shadows.lg,
   },
+  headerContent: {
+    marginBottom: 0,
+  },
   headerGreeting: {
     ...Fonts.bold,
     color: Colors.white,
     fontSize: 22,
-    marginBottom: Spacing.xs,
+    marginBottom: 0,
+    marginTop: Spacing.md,
     textAlign: 'center',
   },
   headerSubtitle: {
@@ -118,7 +123,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.9,
     textAlign: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   createButton: {
     backgroundColor: Colors.white,
