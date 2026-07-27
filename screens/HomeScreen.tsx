@@ -38,22 +38,25 @@ export default function HomeScreen({ navigation }: any) {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <View style={styles.headerContent}>
-        <Text style={styles.headerTitle}>URAP Announcements</Text>
-        {currentUser.role === 'admin' && (
-          <TouchableOpacity
-            style={styles.createButton}
-            onPress={handleCreatePost}
-          >
-            <Text style={styles.createButtonText}>+ Post</Text>
-          </TouchableOpacity>
-        )}
+      <View>
+        <Text style={styles.headerGreeting}>Announcements</Text>
+        <Text style={styles.headerSubtitle}>Stay updated with latest news</Text>
       </View>
+      {currentUser.role === 'admin' && (
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={handleCreatePost}
+        >
+          <Text style={styles.createButtonEmoji}>✏️</Text>
+          <Text style={styles.createButtonText}>Post</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
+      <Text style={styles.emptyStateEmoji}>📭</Text>
       <Text style={styles.emptyStateTitle}>No announcements yet</Text>
       <Text style={styles.emptyStateText}>
         Check back soon for updates from URAP admins
@@ -88,34 +91,47 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   listContent: {
-    padding: Spacing.md,
-    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   header: {
     backgroundColor: Colors.primary,
-    paddingBottom: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderBottomLeftRadius: Radius.lg,
-    borderBottomRightRadius: Radius.lg,
-    marginHorizontal: -Spacing.md,
+    paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+    borderBottomLeftRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
+    marginHorizontal: -Spacing.md,
     alignItems: 'center',
+    ...Shadows.lg,
   },
-  headerTitle: {
+  headerGreeting: {
     ...Fonts.bold,
     color: Colors.white,
-    fontSize: 24,
+    fontSize: 22,
+    marginBottom: Spacing.xs,
+    textAlign: 'center',
+  },
+  headerSubtitle: {
+    ...Fonts.regular,
+    color: Colors.white,
+    fontSize: 12,
+    opacity: 0.9,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
   },
   createButton: {
     backgroundColor: Colors.white,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    ...Shadows.md,
+  },
+  createButtonEmoji: {
+    fontSize: 16,
   },
   createButtonText: {
     ...Fonts.semibold,
@@ -125,7 +141,12 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: Spacing.xxl,
+    paddingHorizontal: Spacing.lg,
+  },
+  emptyStateEmoji: {
+    fontSize: 64,
+    marginBottom: Spacing.md,
   },
   emptyStateTitle: {
     ...Fonts.semibold,
@@ -138,5 +159,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontSize: 14,
     textAlign: 'center',
+    lineHeight: 20,
   },
 });

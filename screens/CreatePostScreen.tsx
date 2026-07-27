@@ -158,6 +158,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.lg,
     backgroundColor: Colors.primary,
+    borderBottomLeftRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
+    ...Shadows.lg,
+    marginBottom: Spacing.md,
   },
   backButton: {
     ...Fonts.semibold,
@@ -168,10 +172,11 @@ const styles = StyleSheet.create({
   title: {
     ...Fonts.bold,
     color: Colors.white,
-    fontSize: 24,
+    fontSize: 22,
   },
   form: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.xl,
   },
   section: {
     marginBottom: Spacing.lg,
@@ -185,13 +190,13 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
     ...Fonts.regular,
     color: Colors.text,
     backgroundColor: Colors.white,
-    ...Shadows.sm,
+    ...Shadows.md,
   },
   contentInput: {
     minHeight: 120,
@@ -199,10 +204,11 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     width: '100%',
-    height: 200,
-    borderRadius: Radius.md,
+    height: 180,
+    borderRadius: Radius.lg,
     marginTop: Spacing.md,
     resizeMode: 'cover',
+    ...Shadows.md,
   },
   buttonGroup: {
     flexDirection: 'row',
@@ -212,14 +218,14 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.md,
   },
   cancelButton: {
     backgroundColor: Colors.white,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.primary,
   },
   cancelButtonText: {

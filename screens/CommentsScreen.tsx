@@ -59,15 +59,19 @@ export default function CommentsScreen({ route, navigation }: any) {
   const renderHeader = () => (
     <View>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          style={styles.backButtonContainer}
+        >
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Comments</Text>
+        <View style={{ width: 50 }} />
       </View>
 
       {/* Post Preview */}
       {post && (
-        <View style={[styles.postPreview, styles.section]}>
+        <View style={styles.postPreview}>
           <View style={styles.postHeader}>
             <Image
               source={{ uri: post.author.avatar }}
@@ -87,7 +91,6 @@ export default function CommentsScreen({ route, navigation }: any) {
         </View>
       )}
 
-      <View style={styles.divider} />
       <Text style={styles.commentCount}>
         {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
       </Text>
@@ -167,30 +170,40 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   listContent: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   header: {
-    paddingBottom: Spacing.md,
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    borderBottomLeftRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
+    ...Shadows.lg,
+  },
+  backButtonContainer: {
+    width: 50,
   },
   backButton: {
     ...Fonts.semibold,
-    color: Colors.primary,
+    color: Colors.white,
     fontSize: 14,
-    marginBottom: Spacing.sm,
   },
   title: {
     ...Fonts.bold,
-    color: Colors.text,
+    color: Colors.white,
     fontSize: 20,
-  },
-  section: {
-    marginBottom: Spacing.md,
   },
   postPreview: {
     backgroundColor: Colors.white,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     padding: Spacing.md,
-    ...Shadows.sm,
+    marginBottom: Spacing.md,
+    ...Shadows.md,
   },
   postHeader: {
     flexDirection: 'row',
@@ -198,10 +211,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   postAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     marginRight: Spacing.sm,
+    borderWidth: 2,
+    borderColor: Colors.primary,
   },
   postAuthorInfo: {
     flex: 1,
@@ -227,32 +242,31 @@ const styles = StyleSheet.create({
     ...Fonts.regular,
     color: Colors.textSecondary,
     fontSize: 12,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.md,
+    lineHeight: 16,
   },
   commentCount: {
     ...Fonts.semibold,
     color: Colors.text,
-    fontSize: 14,
+    fontSize: 13,
     marginBottom: Spacing.md,
+    marginHorizontal: Spacing.md,
   },
   commentItem: {
     flexDirection: 'row',
     marginBottom: Spacing.md,
   },
   commentAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     marginRight: Spacing.sm,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
   },
   commentContent: {
     flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     padding: Spacing.sm,
     ...Shadows.sm,
   },
@@ -286,9 +300,9 @@ const styles = StyleSheet.create({
   commentText: {
     ...Fonts.regular,
     color: Colors.text,
-    fontSize: 13,
+    fontSize: 12,
     marginTop: Spacing.xs,
-    lineHeight: 18,
+    lineHeight: 16,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -309,7 +323,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     backgroundColor: Colors.background,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     alignItems: 'flex-end',
     paddingRight: Spacing.sm,
     gap: Spacing.xs,
@@ -326,7 +340,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
-    borderRadius: Radius.sm,
+    borderRadius: Radius.lg,
   },
   sendButtonDisabled: {
     opacity: 0.7,

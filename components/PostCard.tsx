@@ -90,14 +90,14 @@ export default function PostCard({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.white,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     marginBottom: Spacing.md,
     overflow: 'hidden',
-    ...Shadows.md,
+    ...Shadows.lg,
   },
   header: {
     padding: Spacing.md,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
     borderBottomColor: Colors.border,
   },
   authorInfo: {
@@ -105,10 +105,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     marginRight: Spacing.sm,
+    borderWidth: 2,
+    borderColor: Colors.primary,
   },
   authorDetails: {
     flex: 1,
@@ -116,10 +118,12 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: Spacing.xs,
   },
   authorName: {
-    ...Fonts.bold,
+    ...Fonts.semibold,
     color: Colors.text,
+    fontSize: 14,
     marginRight: Spacing.xs,
   },
   adminBadge: {
@@ -130,47 +134,49 @@ const styles = StyleSheet.create({
   },
   adminText: {
     color: Colors.white,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
   },
   timestamp: {
     ...Fonts.regular,
     color: Colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 11,
   },
   content: {
     padding: Spacing.md,
+    paddingTop: Spacing.sm,
   },
   title: {
     ...Fonts.semibold,
     color: Colors.text,
-    fontSize: 16,
+    fontSize: 15,
     marginBottom: Spacing.xs,
   },
   text: {
     ...Fonts.regular,
     color: Colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
   },
   image: {
     width: '100%',
-    height: 200,
+    height: 180,
     resizeMode: 'cover',
   },
   footer: {
-    padding: Spacing.md,
-    borderTopWidth: 1,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderTopWidth: 0.5,
     borderTopColor: Colors.border,
-    alignItems: 'center',
+    backgroundColor: Colors.background,
   },
   commentButton: {
-    padding: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
   },
   commentText: {
     ...Fonts.semibold,
     color: Colors.primary,
-    fontSize: 14,
+    fontSize: 13,
   },
 });
