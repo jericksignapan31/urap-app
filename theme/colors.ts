@@ -6,6 +6,7 @@ const Colors = {
 
   background: '#F8F9FA',
   surface: '#FFFFFF',
+  white: '#FFFFFF',
 
   text: '#111827',
   textSecondary: '#6B7280',
@@ -16,7 +17,6 @@ const Colors = {
   warning: '#FACC15',
   danger: '#DC2626',
 
-  white: '#FFFFFF',
   black: '#000000',
 };
 

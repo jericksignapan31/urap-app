@@ -21,6 +21,24 @@ const Fonts = {
     semiBold: '600' as const,
     bold: '700' as const,
   },
+
+  // Helper styles for quick access
+  regular: {
+    fontFamily: 'System',
+    fontWeight: '400' as const,
+  },
+  medium: {
+    fontFamily: 'System',
+    fontWeight: '500' as const,
+  },
+  semibold: {
+    fontFamily: 'System',
+    fontWeight: '600' as const,
+  },
+  bold: {
+    fontFamily: 'System',
+    fontWeight: '700' as const,
+  },
 };
 
 export default Fonts;
