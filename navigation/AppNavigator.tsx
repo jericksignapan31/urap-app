@@ -6,7 +6,6 @@ import { Text } from 'react-native';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
 import CreatePostScreen from '../screens/CreatePostScreen';
 import CommentsScreen from '../screens/CommentsScreen';
@@ -96,14 +95,10 @@ export default function AppNavigator() {
           headerShown: false,
         }}
       >
-        {/* Auth Screens - Initial Stack */}
+        {/* Auth Screen */}
         <Stack.Screen
           name="Login"
           component={LoginScreen}
-        />
-        <Stack.Screen
-          name="Register"
-          component={RegisterScreen}
         />
 
         {/* Main App Screens - Tab Navigator */}

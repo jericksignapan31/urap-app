@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 
 import Colors from '../theme/colors';
@@ -45,67 +46,58 @@ export default function LoginScreen({ navigation }: any) {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
 
-          {/* Logo Section */}
-          <View style={styles.logoSection}>
-            <Text style={styles.logo}>URAP</Text>
-            <Text style={styles.subtitle}>United Riders Alliance Philippines</Text>
-          </View>
-
-          {/* Title */}
-          <Text style={styles.title}>Welcome Back</Text>
-
-          {/* Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              placeholder="Enter your email"
-              placeholderTextColor={Colors.textSecondary}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              editable={!loading}
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../assets/logo.png')}
+              style={styles.logo}
             />
+            <Text style={styles.urapText}>URAP</Text>
+            <Text style={styles.urapMeaning}>United Riders Alliance Philippines</Text>
           </View>
 
-          {/* Password */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              placeholder="Enter your password"
-              placeholderTextColor={Colors.textSecondary}
-              secureTextEntry
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              editable={!loading}
-            />
-          </View>
+          {/* Form */}
+          <View style={styles.formContainer}>
+            {/* Email */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                placeholder="Enter your email"
+                placeholderTextColor={Colors.textSecondary}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                editable={!loading}
+              />
+            </View>
 
-          {/* Demo Credentials Note */}
-          <Text style={styles.demoText}>
-            Demo: Use email & password shown above
-          </Text>
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                placeholder="Enter your password"
+                placeholderTextColor={Colors.textSecondary}
+                secureTextEntry
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                editable={!loading}
+              />
+            </View>
 
-          {/* Login Button */}
-          <TouchableOpacity
-            style={[styles.loginButton, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={Colors.white} />
-            ) : (
-              <Text style={styles.loginButtonText}>Login</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Register Link */}
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.registerLink}>Sign up</Text>
+            {/* Login Button */}
+            <TouchableOpacity
+              style={[styles.loginButton, loading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : (
+                <Text style={styles.loginButtonText}>Login</Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -126,27 +118,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: '100%',
   },
-  logoSection: {
+  logoContainer: {
     alignItems: 'center',
     marginBottom: Spacing.xl,
+    marginTop: Spacing.xl,
   },
   logo: {
+    width: 180,
+    height: 180,
+    resizeMode: 'contain',
+  },
+  urapText: {
     ...Fonts.bold,
-    fontSize: 48,
+    fontSize: 32,
     color: Colors.primary,
     letterSpacing: 2,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.md,
   },
-  subtitle: {
+  urapMeaning: {
     ...Fonts.regular,
     fontSize: 12,
     color: Colors.textSecondary,
+    marginTop: Spacing.xs,
+    textAlign: 'center',
   },
-  title: {
-    ...Fonts.bold,
-    fontSize: 28,
-    color: Colors.text,
-    marginBottom: Spacing.lg,
+  formContainer: {
+    marginTop: Spacing.lg,
   },
   inputGroup: {
     marginBottom: Spacing.lg,
@@ -168,13 +165,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     ...Shadows.sm,
   },
-  demoText: {
-    ...Fonts.regular,
-    color: Colors.textSecondary,
-    fontSize: 11,
-    marginBottom: Spacing.lg,
-    fontStyle: 'italic',
-  },
   loginButton: {
     backgroundColor: Colors.primary,
     borderRadius: Radius.md,
@@ -190,21 +180,5 @@ const styles = StyleSheet.create({
     ...Fonts.bold,
     color: Colors.white,
     fontSize: 16,
-  },
-  registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-  },
-  registerText: {
-    ...Fonts.regular,
-    color: Colors.textSecondary,
-    fontSize: 14,
-  },
-  registerLink: {
-    ...Fonts.semibold,
-    color: Colors.primary,
-    fontSize: 14,
   },
 });
