@@ -20,6 +20,9 @@ import { getCommentsByPostId, createComment, deleteComment } from '../services/c
 import { getPostById } from '../services/postService';
 import { useUser } from '../context/UserContext';
 import { Comment, Post } from '../types';
+import {
+  Keyboard,
+} from 'react-native';
 
 export default function CommentsScreen({ route, navigation }: any) {
   const { postId } = route.params;
@@ -30,6 +33,30 @@ export default function CommentsScreen({ route, navigation }: any) {
   const [submitting, setSubmitting] = useState(false);
   const [avatarErrors, setAvatarErrors] = useState<Set<string>>(new Set());
   const { currentUser } = useUser();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+
+    const show = Keyboard.addListener(
+      'keyboardDidShow',
+      e => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+
+    const hide = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+
+  }, []);
 
   useEffect(() => {
     loadPostAndComments();
@@ -138,7 +165,7 @@ export default function CommentsScreen({ route, navigation }: any) {
 
       setComments([...comments, newCommentObj]);
       setNewComment('');
-      
+
       console.log('Comment added successfully:', commentId);
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -153,7 +180,7 @@ export default function CommentsScreen({ route, navigation }: any) {
   const renderHeader = () => (
     <View>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButtonContainer}
         >
@@ -255,13 +282,22 @@ export default function CommentsScreen({ route, navigation }: any) {
         renderItem={renderCommentItem}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={{
+          paddingBottom: 90,
+        }}
         scrollEnabled={true}
       />
 
       {/* Comment Input Box */}
       {currentUser && (
-        <View style={styles.inputContainer}>
+        <View
+          style={[
+            styles.inputContainer,
+            {
+              bottom: Math.max(0, keyboardHeight - 48),
+            },
+          ]}
+        >
           {!avatarErrors.has('currentUser') ? (
             <Image
               source={{ uri: currentUser.avatar || 'https://ui-avatars.com/api/?name=' + currentUser.name }}
@@ -465,15 +501,21 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   inputContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.white,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    alignItems: 'flex-end',
-    gap: Spacing.sm,
-  },
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+
+  flexDirection: 'row',
+  alignItems: 'center', // <-- palitan ito
+  backgroundColor: Colors.white,
+
+  paddingHorizontal: Spacing.md,
+  paddingVertical: 8,
+
+  borderTopWidth: 1,
+  borderTopColor: Colors.border,
+},
   userAvatar: {
     width: 36,
     height: 36,
@@ -490,28 +532,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   inputWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: Colors.background,
-    borderRadius: Radius.lg,
-    alignItems: 'flex-end',
-    paddingRight: Spacing.sm,
-    gap: Spacing.xs,
-  },
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center', // dati: flex-end
+  backgroundColor: Colors.background,
+  borderRadius: Radius.lg,
+  paddingHorizontal: Spacing.sm,
+  paddingVertical: 6,
+},
   input: {
-    flex: 1,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    ...Fonts.regular,
-    color: Colors.text,
-    maxHeight: 100,
-  },
+  flex: 1,
+  ...Fonts.regular,
+  color: Colors.text,
+  paddingVertical: 8,
+  maxHeight: 100,
+  textAlignVertical: 'center',
+},
   sendButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.lg,
-  },
+  backgroundColor: Colors.primary,
+  borderRadius: 20,
+  paddingHorizontal: 14,
+  height: 40,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginLeft: 8,
+},
   sendButtonDisabled: {
     opacity: 0.7,
   },
