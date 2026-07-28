@@ -26,6 +26,21 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
   commentsCount: number;
+  likesCount: number;
+  liked?: boolean; // Whether current user has liked this post
+}
+
+// Comment type
+export interface Comment {
+  id: string;
+  postId: string;
+  authorId: string;
+  author: {
+    name: string;
+    avatar?: string;
+  };
+  content: string;
+  createdAt: string;
 }
 
 // Comment type

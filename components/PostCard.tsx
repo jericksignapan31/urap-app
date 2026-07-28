@@ -18,15 +18,17 @@ interface PostCardProps {
   post: Post;
   onPress?: () => void;
   onCommentPress?: (postId: string) => void;
+  onLikePress?: (postId: string, isLiked: boolean) => void;
 }
 
 export default function PostCard({
   post,
   onPress,
   onCommentPress,
+  onLikePress,
 }: PostCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(post.liked || false);
+  const [likeCount, setLikeCount] = useState(post.likesCount || 0);
   const [avatarError, setAvatarError] = useState(false);
 
   const formatDate = (dateString: string) => {
@@ -44,8 +46,10 @@ export default function PostCard({
   };
 
   const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+    const newLikeState = !isLiked;
+    setIsLiked(newLikeState);
+    setLikeCount(newLikeState ? likeCount + 1 : Math.max(0, likeCount - 1));
+    onLikePress?.(post.id, newLikeState);
   };
 
   return (

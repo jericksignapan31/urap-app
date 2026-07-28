@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Post } from '../types';
 import PostCard from '../components/PostCard';
-import { getAllPosts } from '../services/postService';
+import { getAllPosts, likePost, unlikePost } from '../services/postService';
 import { useUser } from '../context/UserContext';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
@@ -32,7 +32,7 @@ export default function HomeScreen({ navigation }: any) {
   const loadPosts = async () => {
     try {
       setLoading(true);
-      const fetchedPosts = await getAllPosts();
+      const fetchedPosts = await getAllPosts(currentUser?.id);
       setPosts(fetchedPosts);
     } catch (error) {
       console.error('Error loading posts:', error);
@@ -43,11 +43,30 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const handlePostPress = (postId: string) => {
-    navigation.navigate('PostDetail', { postId });
+    // Navigate to comments when post is clicked
+    navigation.navigate('Comments', { postId });
   };
 
   const handleCommentPress = (postId: string) => {
     navigation.navigate('Comments', { postId });
+  };
+
+  const handleLikePress = async (postId: string, isLiked: boolean) => {
+    try {
+      if (!currentUser) {
+        alert('Please log in to like posts');
+        return;
+      }
+
+      if (isLiked) {
+        await likePost(postId, currentUser.id);
+      } else {
+        await unlikePost(postId, currentUser.id);
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      alert('Failed to update like');
+    }
   };
 
   const handleCreatePost = () => {
@@ -121,6 +140,7 @@ export default function HomeScreen({ navigation }: any) {
             post={item}
             onPress={() => handlePostPress(item.id)}
             onCommentPress={handleCommentPress}
+            onLikePress={handleLikePress}
           />
         )}
         keyExtractor={(item) => item.id}

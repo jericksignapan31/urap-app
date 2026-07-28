@@ -9,13 +9,14 @@ import {
   SafeAreaView,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
 import Spacing from '../theme/spacing';
 import Radius from '../theme/radius';
 import Shadows from '../theme/shadows';
-import { getCommentsByPostId, createComment } from '../services/commentService';
+import { getCommentsByPostId, createComment, deleteComment } from '../services/commentService';
 import { getPostById } from '../services/postService';
 import { useUser } from '../context/UserContext';
 import { Comment, Post } from '../types';
@@ -50,6 +51,52 @@ export default function CommentsScreen({ route, navigation }: any) {
     }
   };
 
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const handleDeleteComment = (comment: Comment) => {
+    const isAuthor = currentUser?.id === comment.authorId;
+    const isAdmin = currentUser?.role === 'admin';
+
+    if (!isAuthor && !isAdmin) {
+      alert('You can only delete your own comments');
+      return;
+    }
+
+    Alert.alert(
+      'Delete Comment?',
+      'This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteComment(comment.id, postId);
+              setComments(comments.filter(c => c.id !== comment.id));
+            } catch (error) {
+              console.error('Error deleting comment:', error);
+              alert('Failed to delete comment');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim()) {
       alert('Please write a comment');
@@ -63,23 +110,41 @@ export default function CommentsScreen({ route, navigation }: any) {
 
     try {
       setSubmitting(true);
+      const commentText = newComment;
 
       // Create comment in Firebase
-      await createComment(
+      const commentId = await createComment(
         postId,
         currentUser.id,
         currentUser.name,
         currentUser.role,
-        currentUser.avatar || 'https://via.placeholder.com/40',
-        newComment
+        currentUser.avatar || 'https://ui-avatars.com/api/?name=' + currentUser.name,
+        commentText
       );
 
+      // Add comment to local state immediately for instant display
+      const newCommentObj: Comment = {
+        id: commentId,
+        postId: postId,
+        authorId: currentUser.id,
+        author: {
+          name: currentUser.name,
+          avatar: currentUser.avatar,
+          role: currentUser.role,
+        },
+        content: commentText,
+        createdAt: new Date().toISOString(),
+      };
+
+      setComments([...comments, newCommentObj]);
       setNewComment('');
-      // Reload comments
-      await loadPostAndComments();
+      
+      console.log('Comment added successfully:', commentId);
     } catch (error) {
       console.error('Error adding comment:', error);
       alert('Failed to add comment');
+      // Reload comments if there was an error
+      await loadPostAndComments();
     } finally {
       setSubmitting(false);
     }
@@ -126,37 +191,51 @@ export default function CommentsScreen({ route, navigation }: any) {
     </View>
   );
 
-  const renderCommentItem = ({ item }: { item: Comment }) => (
-    <View style={styles.commentItem}>
-      {!avatarErrors.has(item.id) ? (
-        <Image
-          source={{ uri: item.author.avatar || 'https://ui-avatars.com/api/?name=' + item.author.name }}
-          style={styles.commentAvatar}
-          onError={() => setAvatarErrors(new Set([...avatarErrors, item.id]))}
-        />
-      ) : (
-        <View style={[styles.commentAvatar, styles.fallbackCommentAvatar]}>
-          <Text style={styles.fallbackCommentInitial}>
-            {item.author.name.charAt(0).toUpperCase()}
+  const renderCommentItem = ({ item }: { item: Comment }) => {
+    const isAuthor = currentUser?.id === item.authorId;
+    const isAdmin = currentUser?.role === 'admin';
+    const canDelete = isAuthor || isAdmin;
+
+    return (
+      <View style={styles.commentItem}>
+        {!avatarErrors.has(item.id) ? (
+          <Image
+            source={{ uri: item.author.avatar || 'https://ui-avatars.com/api/?name=' + item.author.name }}
+            style={styles.commentAvatar}
+            onError={() => setAvatarErrors(new Set([...avatarErrors, item.id]))}
+          />
+        ) : (
+          <View style={[styles.commentAvatar, styles.fallbackCommentAvatar]}>
+            <Text style={styles.fallbackCommentInitial}>
+              {item.author.name.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
+        <View style={styles.commentContent}>
+          <View style={styles.commentHeader}>
+            <Text style={styles.commentAuthor}>{item.author.name}</Text>
+            {item.author.role === 'admin' && (
+              <View style={styles.adminBadge}>
+                <Text style={styles.adminText}>ADMIN</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.commentTime}>
+            {formatTime(item.createdAt)}
           </Text>
+          <Text style={styles.commentText}>{item.content}</Text>
         </View>
-      )}
-      <View style={styles.commentContent}>
-        <View style={styles.commentHeader}>
-          <Text style={styles.commentAuthor}>{item.author.name}</Text>
-          {item.author.role === 'admin' && (
-            <View style={styles.adminBadge}>
-              <Text style={styles.adminText}>ADMIN</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.commentTime}>
-          {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
-        <Text style={styles.commentText}>{item.content}</Text>
+        {canDelete && (
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteComment(item)}
+          >
+            <Text style={styles.deleteButtonText}>⋯</Text>
+          </TouchableOpacity>
+        )}
       </View>
-    </View>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -440,5 +519,13 @@ const styles = StyleSheet.create({
     ...Fonts.semibold,
     color: Colors.white,
     fontSize: 12,
+  },
+  deleteButton: {
+    padding: Spacing.xs,
+    marginLeft: Spacing.xs,
+  },
+  deleteButtonText: {
+    fontSize: 18,
+    color: Colors.textSecondary,
   },
 });

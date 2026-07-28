@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,23 +7,58 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase/firebaseConfig';
+import { useUser } from '../context/UserContext';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
 import Spacing from '../theme/spacing';
 import Radius from '../theme/radius';
 import Shadows from '../theme/shadows';
-import { currentUser } from '../utils/mockData';
 
 export default function ProfileScreen({ navigation }: any) {
-  const handleLogout = () => {
-    alert('Logged out successfully');
-    navigation.navigate('Login');
+  const { currentUser, logout } = useUser();
+  const [avatarError, setAvatarError] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
+      // Call logout from context which handles auth state
+      logout();
+      
+      // Sign out from Firebase
+      await signOut(auth);
+      
+      // Navigate to login
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Failed to logout');
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const handleEditProfile = () => {
-    alert('Edit profile feature coming soon');
+    navigation.navigate('EditProfile');
   };
+
+  if (!currentUser) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -42,13 +77,26 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          <Image
-            source={{ uri: currentUser.avatar }}
-            style={styles.avatar}
-          />
+          {!avatarError ? (
+            <Image
+              source={{ uri: currentUser.avatar || 'https://ui-avatars.com/api/?name=' + currentUser.name }}
+              style={styles.avatar}
+              onError={(error) => {
+                console.log('Avatar load error:', error);
+                console.log('Avatar URL:', currentUser.avatar);
+                setAvatarError(true);
+              }}
+              onLoad={() => console.log('Avatar loaded successfully')}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.fallbackAvatar]}>
+              <Text style={styles.fallbackInitial}>
+                {currentUser.name.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
           <Text style={styles.name}>{currentUser.name}</Text>
           <Text style={styles.email}>{currentUser.email}</Text>
-          
           {/* Role Badge */}
           <View
             style={[
@@ -111,10 +159,15 @@ export default function ProfileScreen({ navigation }: any) {
           <TouchableOpacity
             style={[styles.actionButton, styles.logoutButton]}
             onPress={handleLogout}
+            disabled={loggingOut}
           >
-            <Text style={[styles.actionButtonText, styles.logoutButtonText]}>
-              🚪 Logout
-            </Text>
+            {loggingOut ? (
+              <ActivityIndicator size="small" color={Colors.danger} />
+            ) : (
+              <Text style={[styles.actionButtonText, styles.logoutButtonText]}>
+                🚪 Logout
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -152,6 +205,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    ...Fonts.regular,
+    color: Colors.textSecondary,
+    fontSize: 14,
+    marginTop: Spacing.md,
   },
   header: {
     backgroundColor: Colors.primary,
@@ -199,6 +263,16 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     borderWidth: 4,
     borderColor: Colors.primary,
+  },
+  fallbackAvatar: {
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fallbackInitial: {
+    color: Colors.white,
+    ...Fonts.bold,
+    fontSize: 32,
   },
   name: {
     ...Fonts.bold,

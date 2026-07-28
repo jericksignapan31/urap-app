@@ -9,6 +9,8 @@ import {
   query,
   orderBy,
   Timestamp,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { Post } from '../types';
@@ -38,6 +40,8 @@ export const createPost = async (
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       commentsCount: 0,
+      likesCount: 0,
+      likes: [], // Array of user IDs who liked this post
     });
     console.log('Post created with ID:', docRef.id);
     return docRef.id;
@@ -48,7 +52,7 @@ export const createPost = async (
 };
 
 // Get all posts ordered by createdAt (newest first)
-export const getAllPosts = async (): Promise<Post[]> => {
+export const getAllPosts = async (currentUserId?: string): Promise<Post[]> => {
   try {
     const postsRef = collection(db, 'posts');
     const q = query(postsRef, orderBy('createdAt', 'desc'));
@@ -57,6 +61,7 @@ export const getAllPosts = async (): Promise<Post[]> => {
     const posts: Post[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      const likes = data.likes || [];
       posts.push({
         id: doc.id,
         authorId: data.authorId,
@@ -67,6 +72,8 @@ export const getAllPosts = async (): Promise<Post[]> => {
         createdAt: data.createdAt?.toDate?.().toISOString() || new Date().toISOString(),
         updatedAt: data.updatedAt?.toDate?.().toISOString() || new Date().toISOString(),
         commentsCount: data.commentsCount || 0,
+        likesCount: data.likesCount || 0,
+        liked: currentUserId ? likes.includes(currentUserId) : false,
       } as Post);
     });
 
@@ -166,6 +173,54 @@ export const decrementCommentsCount = async (postId: string) => {
     }
   } catch (error) {
     console.error('Error decrementing comments count:', error);
+    throw error;
+  }
+};
+
+// Like a post
+export const likePost = async (postId: string, userId: string) => {
+  try {
+    const postRef = doc(db, 'posts', postId);
+    const postSnap = await getDoc(postRef);
+    
+    if (postSnap.exists()) {
+      const likes = postSnap.data().likes || [];
+      
+      // If user hasn't already liked this post
+      if (!likes.includes(userId)) {
+        await updateDoc(postRef, {
+          likes: arrayUnion(userId),
+          likesCount: likes.length + 1,
+          updatedAt: Timestamp.now(),
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error liking post:', error);
+    throw error;
+  }
+};
+
+// Unlike a post
+export const unlikePost = async (postId: string, userId: string) => {
+  try {
+    const postRef = doc(db, 'posts', postId);
+    const postSnap = await getDoc(postRef);
+    
+    if (postSnap.exists()) {
+      const likes = postSnap.data().likes || [];
+      
+      // If user has liked this post
+      if (likes.includes(userId)) {
+        await updateDoc(postRef, {
+          likes: arrayRemove(userId),
+          likesCount: Math.max(0, likes.length - 1),
+          updatedAt: Timestamp.now(),
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error unliking post:', error);
     throw error;
   }
 };

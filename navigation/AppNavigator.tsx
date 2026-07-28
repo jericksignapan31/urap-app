@@ -10,6 +10,7 @@ import HomeScreen from '../screens/HomeScreen';
 import CreatePostScreen from '../screens/CreatePostScreen';
 import CommentsScreen from '../screens/CommentsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
@@ -36,6 +37,26 @@ function HomeStack() {
       <Stack.Screen
         name="CreatePost"
         component={CreatePostScreen}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Profile Stack for Tab Navigation
+function ProfileStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen
+        name="ProfileMain"
+        component={ProfileScreen}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
       />
     </Stack.Navigator>
   );
@@ -72,8 +93,8 @@ function AppTabStack() {
         }}
       />
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
+        name="ProfileTab"
+        component={ProfileStack}
         options={{
           title: 'Profile',
           tabBarLabel: 'Profile',

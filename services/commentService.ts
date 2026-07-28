@@ -53,8 +53,7 @@ export const getCommentsByPostId = async (postId: string): Promise<Comment[]> =>
     const commentsRef = collection(db, 'comments');
     const q = query(
       commentsRef,
-      where('postId', '==', postId),
-      orderBy('createdAt', 'asc')
+      where('postId', '==', postId)
     );
     const querySnapshot = await getDocs(q);
 
@@ -70,6 +69,9 @@ export const getCommentsByPostId = async (postId: string): Promise<Comment[]> =>
         createdAt: data.createdAt?.toDate?.().toISOString() || new Date().toISOString(),
       } as Comment);
     });
+
+    // Sort comments by createdAt (oldest first) - done client-side
+    comments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
     return comments;
   } catch (error) {

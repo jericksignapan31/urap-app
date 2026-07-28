@@ -9,6 +9,7 @@ import {
   Image,
   ActivityIndicator,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { createPost } from '../services/postService';
 import { useUser } from '../context/UserContext';
@@ -20,7 +21,6 @@ import Shadows from '../theme/shadows';
 
 export default function CreatePostScreen({ navigation }: any) {
   const [content, setContent] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const { currentUser } = useUser();
 
@@ -45,13 +45,11 @@ export default function CreatePostScreen({ navigation }: any) {
         currentUser.role,
         currentUser.avatar || 'https://via.placeholder.com/50',
         content.split('\n')[0] || 'Announcement',
-        content,
-        imageUrl || undefined
+        content
       );
 
       alert('Post created successfully!');
       setContent('');
-      setImageUrl('');
       navigation.goBack();
     } catch (error) {
       console.error('Error creating post:', error);
@@ -97,48 +95,7 @@ export default function CreatePostScreen({ navigation }: any) {
           multiline
           editable={!loading}
         />
-
-        {/* Image Preview */}
-        {imageUrl && (
-          <View style={styles.imagePreviewContainer}>
-            <Image
-              source={{ uri: imageUrl }}
-              style={styles.imagePreview}
-            />
-            <TouchableOpacity
-              style={styles.removeImageButton}
-              onPress={() => setImageUrl('')}
-            >
-              <Text style={styles.removeImageText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </ScrollView>
-
-      {/* Add to Post Options */}
-      <View style={styles.addToPost}>
-        <Text style={styles.addToPostLabel}>Add to your post</Text>
-        <View style={styles.actionIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.icon}>🖼️</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.icon}>👥</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.icon}>😊</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.icon}>❤️</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.icon}>📍</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.icon}>⋯</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
 
       {/* Post Button Footer */}
       <View style={styles.footerSection}>
