@@ -10,7 +10,10 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
+import { auth } from '../firebase/firebaseConfig';
+import { useUser } from '../context/UserContext';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
 import Spacing from '../theme/spacing';
@@ -21,24 +24,53 @@ export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('john@urap.ph');
   const [password, setPassword] = useState('password');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { setCurrentUser, fetchUserProfile } = useUser();
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      alert('Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
 
+    setError('');
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Sign in with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Fetch user profile from Firestore
+      const userProfile = await fetchUserProfile(user.uid);
+
+      if (userProfile) {
+        // Store user in context
+        setCurrentUser(userProfile);
+        
+        // Navigate to Home screen
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      } else {
+        setError('User profile not found in database');
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      // Handle different Firebase errors
+      if (err.code === 'auth/user-not-found') {
+        setError('Email not found');
+      } else if (err.code === 'auth/wrong-password') {
+        setError('Incorrect password');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Invalid email format');
+      } else {
+        setError(err.message || 'Login failed. Please try again.');
+      }
+    } finally {
       setLoading(false);
-      // Navigate to Home screen
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
-    }, 1500);
+    }
   };
 
   return (
@@ -58,6 +90,13 @@ export default function LoginScreen({ navigation }: any) {
 
           {/* Form */}
           <View style={styles.formContainer}>
+            {/* Error Message */}
+            {error ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>⚠️ {error}</Text>
+              </View>
+            ) : null}
+
             {/* Email */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
@@ -165,6 +204,20 @@ const styles = StyleSheet.create({
     color: Colors.text,
     backgroundColor: Colors.white,
     ...Shadows.sm,
+  },
+  errorBox: {
+    backgroundColor: '#ffebee',
+    borderLeftWidth: 4,
+    borderLeftColor: '#c62828',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    marginBottom: Spacing.md,
+  },
+  errorText: {
+    ...Fonts.regular,
+    color: '#c62828',
+    fontSize: 14,
   },
   loginButton: {
     backgroundColor: Colors.primary,

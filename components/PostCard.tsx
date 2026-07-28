@@ -25,6 +25,10 @@ export default function PostCard({
   onPress,
   onCommentPress,
 }: PostCardProps) {
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [avatarError, setAvatarError] = useState(false);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -39,14 +43,29 @@ export default function PostCard({
     return date.toLocaleDateString();
   };
 
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+  };
+
   return (
     <Pressable onPress={onPress} style={styles.container}>
+      {/* Header - Author Info */}
       <View style={styles.header}>
         <View style={styles.authorInfo}>
-          <Image
-            source={{ uri: post.author.avatar || 'https://via.placeholder.com/50' }}
-            style={styles.avatar}
-          />
+          {!avatarError ? (
+            <Image
+              source={{ uri: post.author.avatar || 'https://ui-avatars.com/api/?name=' + post.author.name }}
+              style={styles.avatar}
+              onError={() => setAvatarError(true)}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.fallbackAvatar]}>
+              <Text style={styles.fallbackInitial}>
+                {post.author.name.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
           <View style={styles.authorDetails}>
             <View style={styles.nameRow}>
               <Text style={styles.authorName}>{post.author.name}</Text>
@@ -59,15 +78,18 @@ export default function PostCard({
             <Text style={styles.timestamp}>{formatDate(post.createdAt)}</Text>
           </View>
         </View>
+        <TouchableOpacity>
+          <Text style={styles.moreButton}>⋯</Text>
+        </TouchableOpacity>
       </View>
 
+      {/* Content - Title and Text */}
       <View style={styles.content}>
         <Text style={styles.title}>{post.title}</Text>
-        <Text style={styles.text} numberOfLines={3}>
-          {post.content}
-        </Text>
+        <Text style={styles.text}>{post.content}</Text>
       </View>
 
+      {/* Image */}
       {post.image && (
         <Image
           source={{ uri: post.image }}
@@ -75,12 +97,36 @@ export default function PostCard({
         />
       )}
 
+      {/* Engagement Stats */}
+      {(likeCount > 0 || post.commentsCount > 0) && (
+        <View style={styles.stats}>
+          {likeCount > 0 && (
+            <Text style={styles.statsText}>👍 {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}</Text>
+          )}
+          {post.commentsCount > 0 && (
+            <Text style={styles.statsText}>{post.commentsCount} {post.commentsCount === 1 ? 'Comment' : 'Comments'}</Text>
+          )}
+        </View>
+      )}
+
+      {/* Divider */}
+      <View style={styles.divider} />
+
+      {/* Footer - Actions */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={styles.commentButton}
+          style={styles.actionButton}
+          onPress={handleLike}
+        >
+          <Text style={[styles.actionText, isLiked && styles.actionTextActive]}>
+            {isLiked ? '👍' : '🤍'} Like
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
           onPress={() => onCommentPress?.(post.id)}
         >
-          <Text style={styles.commentText}>💬 {post.commentsCount} Comments</Text>
+          <Text style={styles.actionText}>💬 Comment</Text>
         </TouchableOpacity>
       </View>
     </Pressable>
@@ -90,35 +136,49 @@ export default function PostCard({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     marginBottom: Spacing.md,
     overflow: 'hidden',
-    ...Shadows.lg,
+    ...Shadows.md,
   },
   header: {
-    padding: Spacing.md,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   authorInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    flex: 1,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     marginRight: Spacing.sm,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: Colors.primary,
+  },
+  fallbackAvatar: {
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fallbackInitial: {
+    color: Colors.white,
+    ...Fonts.bold,
+    fontSize: 18,
   },
   authorDetails: {
     flex: 1,
+    justifyContent: 'center',
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
   },
   authorName: {
     ...Fonts.semibold,
@@ -134,17 +194,23 @@ const styles = StyleSheet.create({
   },
   adminText: {
     color: Colors.white,
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '700',
   },
   timestamp: {
     ...Fonts.regular,
     color: Colors.textSecondary,
-    fontSize: 11,
+    fontSize: 12,
+  },
+  moreButton: {
+    fontSize: 20,
+    color: Colors.textSecondary,
+    paddingHorizontal: Spacing.sm,
   },
   content: {
-    padding: Spacing.md,
-    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    paddingTop: 0,
   },
   title: {
     ...Fonts.semibold,
@@ -154,29 +220,49 @@ const styles = StyleSheet.create({
   },
   text: {
     ...Fonts.regular,
-    color: Colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    color: Colors.text,
+    fontSize: 14,
+    lineHeight: 20,
   },
   image: {
     width: '100%',
-    height: 180,
+    height: 200,
     resizeMode: 'cover',
   },
-  footer: {
+  stats: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.background,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
   },
-  commentButton: {
+  statsText: {
+    ...Fonts.regular,
+    color: Colors.textSecondary,
+    fontSize: 12,
+  },
+  divider: {
+    height: 0.5,
+    backgroundColor: Colors.border,
+  },
+  footer: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.xs,
+  },
+  actionButton: {
+    flex: 1,
     paddingVertical: Spacing.sm,
     alignItems: 'center',
+    borderRadius: Radius.sm,
   },
-  commentText: {
+  actionText: {
     ...Fonts.semibold,
-    color: Colors.primary,
+    color: Colors.textSecondary,
     fontSize: 13,
+  },
+  actionTextActive: {
+    color: Colors.primary,
   },
 });

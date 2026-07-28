@@ -6,142 +6,154 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  ScrollView,
   Image,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
+import { createPost } from '../services/postService';
+import { useUser } from '../context/UserContext';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
 import Spacing from '../theme/spacing';
 import Radius from '../theme/radius';
 import Shadows from '../theme/shadows';
-import { mockPosts } from '../utils/mockData';
 
 export default function CreatePostScreen({ navigation }: any) {
-  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const { currentUser } = useUser();
 
   const handleCreatePost = async () => {
-    if (!title.trim() || !content.trim()) {
-      alert('Please fill in all required fields');
+    if (!content.trim()) {
+      alert('Please write something in your announcement');
+      return;
+    }
+
+    if (!currentUser) {
+      alert('User not authenticated');
       return;
     }
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      const newPost = {
-        id: String(mockPosts.length + 1),
-        authorId: '2',
-        author: {
-          name: 'Maria Admin',
-          role: 'admin' as const,
-          avatar: 'https://via.placeholder.com/50',
-        },
-        title,
+    try {
+      // Create post in Firebase with current user data
+      await createPost(
+        currentUser.id,
+        currentUser.name,
+        currentUser.role,
+        currentUser.avatar || 'https://via.placeholder.com/50',
+        content.split('\n')[0] || 'Announcement',
         content,
-        image: imageUrl || undefined,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        commentsCount: 0,
-      };
-
-      mockPosts.unshift(newPost);
-      setLoading(false);
+        imageUrl || undefined
+      );
 
       alert('Post created successfully!');
+      setContent('');
+      setImageUrl('');
       navigation.goBack();
-    }, 1000);
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Failed to create post');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backButton}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Create Announcement</Text>
-        </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Create post</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.closeButton}>✕</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* Form */}
-        <View style={styles.form}>
-          {/* Title Input */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Title *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter announcement title"
-              placeholderTextColor={Colors.textSecondary}
-              value={title}
-              onChangeText={setTitle}
-              editable={!loading}
-            />
-          </View>
-
-          {/* Content Input */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Content *</Text>
-            <TextInput
-              style={[styles.input, styles.contentInput]}
-              placeholder="Write your announcement here..."
-              placeholderTextColor={Colors.textSecondary}
-              value={content}
-              onChangeText={setContent}
-              multiline
-              numberOfLines={8}
-              textAlignVertical="top"
-              editable={!loading}
-            />
-          </View>
-
-          {/* Image URL Input */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Image URL (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Paste image URL here"
-              placeholderTextColor={Colors.textSecondary}
-              value={imageUrl}
-              onChangeText={setImageUrl}
-              editable={!loading}
-            />
-            {imageUrl && (
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.imagePreview}
-              />
-            )}
-          </View>
-
-          {/* Buttons */}
-          <View style={styles.buttonGroup}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={() => navigation.goBack()}
-              disabled={loading}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.submitButton]}
-              onPress={handleCreatePost}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <Text style={styles.submitButtonText}>Post Announcement</Text>
-              )}
-            </TouchableOpacity>
+      {/* User Info */}
+      <View style={styles.userSection}>
+        <Image
+          source={{ uri: currentUser.avatar || 'https://via.placeholder.com/50' }}
+          style={styles.userAvatar}
+        />
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{currentUser.name}</Text>
+          <View style={styles.privacyBadge}>
+            <Text style={styles.privacyIcon}>👥</Text>
+            <Text style={styles.privacyText}>Public</Text>
           </View>
         </View>
+      </View>
+
+      {/* Compose Area */}
+      <ScrollView style={styles.composeArea} showsVerticalScrollIndicator={false}>
+        <TextInput
+          style={styles.composInput}
+          placeholder="What's on your mind?"
+          placeholderTextColor={Colors.textSecondary}
+          value={content}
+          onChangeText={setContent}
+          multiline
+          editable={!loading}
+        />
+
+        {/* Image Preview */}
+        {imageUrl && (
+          <View style={styles.imagePreviewContainer}>
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.imagePreview}
+            />
+            <TouchableOpacity
+              style={styles.removeImageButton}
+              onPress={() => setImageUrl('')}
+            >
+              <Text style={styles.removeImageText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
+
+      {/* Add to Post Options */}
+      <View style={styles.addToPost}>
+        <Text style={styles.addToPostLabel}>Add to your post</Text>
+        <View style={styles.actionIcons}>
+          <TouchableOpacity style={styles.iconButton}>
+            <Text style={styles.icon}>🖼️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <Text style={styles.icon}>👥</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <Text style={styles.icon}>😊</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <Text style={styles.icon}>❤️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <Text style={styles.icon}>📍</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <Text style={styles.icon}>⋯</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Post Button Footer */}
+      <View style={styles.footerSection}>
+        <TouchableOpacity
+          style={[styles.postButton, loading && styles.postButtonDisabled]}
+          onPress={handleCreatePost}
+          disabled={loading || !content.trim()}
+        >
+          {loading ? (
+            <ActivityIndicator color={Colors.white} />
+          ) : (
+            <Text style={styles.postButtonText}>Post</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -149,96 +161,154 @@ export default function CreatePostScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scrollView: {
-    flex: 1,
+    backgroundColor: Colors.white,
   },
   header: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.lg,
-    backgroundColor: Colors.primary,
-    borderBottomLeftRadius: Radius.xl,
-    borderBottomRightRadius: Radius.xl,
-    ...Shadows.lg,
-    marginBottom: Spacing.md,
-  },
-  backButton: {
-    ...Fonts.semibold,
-    color: Colors.white,
-    fontSize: 14,
-    marginBottom: Spacing.sm,
-  },
-  title: {
-    ...Fonts.bold,
-    color: Colors.white,
-    fontSize: 22,
-  },
-  form: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.xl,
-  },
-  section: {
-    marginBottom: Spacing.lg,
-  },
-  label: {
-    ...Fonts.semibold,
-    color: Colors.text,
-    fontSize: 14,
-    marginBottom: Spacing.sm,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    ...Fonts.regular,
-    color: Colors.text,
-    backgroundColor: Colors.white,
-    ...Shadows.md,
-  },
-  contentInput: {
-    minHeight: 120,
-    paddingTop: Spacing.md,
-  },
-  imagePreview: {
-    width: '100%',
-    height: 180,
-    borderRadius: Radius.lg,
-    marginTop: Spacing.md,
-    resizeMode: 'cover',
-    ...Shadows.md,
-  },
-  buttonGroup: {
     flexDirection: 'row',
-    gap: Spacing.md,
-    marginTop: Spacing.lg,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.lg,
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
   },
-  cancelButton: {
-    backgroundColor: Colors.white,
+  headerTitle: {
+    ...Fonts.bold,
+    fontSize: 18,
+    color: Colors.text,
+  },
+  closeButton: {
+    fontSize: 24,
+    color: Colors.text,
+    padding: Spacing.sm,
+  },
+  userSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
+  userAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: Spacing.sm,
     borderWidth: 1.5,
     borderColor: Colors.primary,
   },
-  cancelButtonText: {
-    ...Fonts.semibold,
-    color: Colors.primary,
-    fontSize: 14,
+  userInfo: {
+    flex: 1,
   },
-  submitButton: {
+  userName: {
+    ...Fonts.semibold,
+    fontSize: 15,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  privacyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.md,
+    alignSelf: 'flex-start',
+  },
+  privacyIcon: {
+    fontSize: 12,
+    marginRight: 4,
+  },
+  privacyText: {
+    ...Fonts.regular,
+    fontSize: 12,
+    color: Colors.text,
+  },
+  composeArea: {
+    flex: 1,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+  },
+  composInput: {
+    ...Fonts.regular,
+    fontSize: 16,
+    color: Colors.text,
+    maxHeight: 200,
+    textAlignVertical: 'top',
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    marginTop: Spacing.md,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: Radius.lg,
+    marginTop: Spacing.md,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.md,
+  },
+  removeImageText: {
+    fontSize: 18,
+    color: Colors.text,
+  },
+  addToPost: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+    marginBottom: Spacing.md,
+  },
+  addToPostLabel: {
+    ...Fonts.regular,
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.sm,
+  },
+  actionIcons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  iconButton: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    marginRight: Spacing.sm,
+  },
+  icon: {
+    fontSize: 20,
+  },
+  footerSection: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+    backgroundColor: Colors.white,
+  },
+  postButton: {
+    paddingVertical: Spacing.md,
     backgroundColor: Colors.primary,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    ...Shadows.md,
   },
-  submitButtonText: {
+  postButtonDisabled: {
+    backgroundColor: Colors.textSecondary,
+    opacity: 0.6,
+  },
+  postButtonText: {
     ...Fonts.semibold,
+    fontSize: 16,
     color: Colors.white,
-    fontSize: 14,
   },
 });
