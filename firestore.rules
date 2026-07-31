@@ -1,0 +1,95 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function myProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function myRole() {
+      return isSignedIn() ? myProfile().role : null;
+    }
+
+    function isSuperadmin() {
+      return isSignedIn() && myRole() == 'superadmin';
+    }
+
+    function isAdminOrAbove() {
+      return isSignedIn() && (myRole() == 'admin' || myRole() == 'superadmin');
+    }
+
+    // Only a verified account may read/write feed data.
+    function isVerified() {
+      return isSignedIn() && myProfile().verified == true;
+    }
+
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    match /users/{userId} {
+      // Users can read their own profile (needed at login); superadmin can read/list everyone
+      // (needed for the pending-accounts queue).
+      allow read: if isOwner(userId) || isSuperadmin();
+
+      // Registration: a user may only ever create THEIR OWN profile, and it must start
+      // as an unverified regular user. This is what stops self-registering as admin/superadmin.
+      allow create: if isOwner(userId)
+        && request.resource.data.id == userId
+        && request.resource.data.role == 'user'
+        && request.resource.data.verified == false;
+
+      // Owners may edit their own name/avatar, but never their own role/verified/email/id/createdAt.
+      // Superadmin may edit anything (this is how approve/reject and role changes happen).
+      allow update: if isSuperadmin()
+        || (isOwner(userId)
+            && unchanged('role')
+            && unchanged('verified')
+            && unchanged('email')
+            && unchanged('id')
+            && unchanged('createdAt'));
+
+      // Only superadmin can delete a profile (used to reject a pending account).
+      allow delete: if isSuperadmin();
+    }
+
+    match /posts/{postId} {
+      allow read: if isVerified();
+
+      // Only the declared author may create a post, and only once verified.
+      allow create: if isVerified() && request.resource.data.authorId == request.auth.uid;
+
+      // Full edits: the post's own author, or admin/superadmin.
+      // Everyone else who is verified may still update ONLY the like/comment-count
+      // bookkeeping fields (this is what likePost/unlikePost/incrementCommentsCount need).
+      allow update: if isVerified() && (
+        resource.data.authorId == request.auth.uid
+        || isAdminOrAbove()
+        || request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['likes', 'likesCount', 'commentsCount', 'updatedAt'])
+      );
+
+      allow delete: if isVerified() && (resource.data.authorId == request.auth.uid || isAdminOrAbove());
+    }
+
+    match /comments/{commentId} {
+      allow read: if isVerified();
+
+      allow create: if isVerified() && request.resource.data.authorId == request.auth.uid;
+
+      // Comments are never edited in this app, only created/deleted.
+      allow update: if false;
+
+      allow delete: if isVerified() && (resource.data.authorId == request.auth.uid || isAdminOrAbove());
+    }
+  }
+}
