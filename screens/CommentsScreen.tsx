@@ -95,7 +95,7 @@ export default function CommentsScreen({ route, navigation }: any) {
 
   const handleDeleteComment = (comment: Comment) => {
     const isAuthor = currentUser?.id === comment.authorId;
-    const isAdmin = currentUser?.role === 'admin';
+    const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'superadmin';
 
     if (!isAuthor && !isAdmin) {
       alert('You can only delete your own comments');
@@ -220,7 +220,7 @@ export default function CommentsScreen({ route, navigation }: any) {
 
   const renderCommentItem = ({ item }: { item: Comment }) => {
     const isAuthor = currentUser?.id === item.authorId;
-    const isAdmin = currentUser?.role === 'admin';
+    const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'superadmin';
     const canDelete = isAuthor || isAdmin;
 
     return (
@@ -241,7 +241,7 @@ export default function CommentsScreen({ route, navigation }: any) {
         <View style={styles.commentContent}>
           <View style={styles.commentHeader}>
             <Text style={styles.commentAuthor}>{item.author.name}</Text>
-            {item.author.role === 'admin' && (
+            {(item.author.role === 'admin' || item.author.role === 'superadmin') && (
               <View style={styles.adminBadge}>
                 <Text style={styles.adminText}>ADMIN</Text>
               </View>

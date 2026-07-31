@@ -23,7 +23,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (firebaseUser) {
         try {
           const userProfile = await fetchUserProfile(firebaseUser.uid);
-          setCurrentUser(userProfile);
+          if (userProfile && !userProfile.verified) {
+            await auth.signOut();
+            setCurrentUser(null);
+          } else {
+            setCurrentUser(userProfile);
+          }
         } catch (error) {
           console.error('Error loading user profile:', error);
         }

@@ -8,6 +8,10 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase/firebaseConfig';
+import { createUserInFirestore } from '../services/userService';
+import { User } from '../types';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
 import Spacing from '../theme/spacing';
@@ -17,12 +21,21 @@ import Shadows from '../theme/shadows';
 export default function RegisterScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [clubName, setClubName] = useState('');
+  const [urapPosition, setUrapPosition] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !clubName.trim() ||
+      !urapPosition.trim() ||
+      !password ||
+      !confirmPassword
+    ) {
       alert('Please fill in all fields');
       return;
     }
@@ -39,12 +52,46 @@ export default function RegisterScreen({ navigation }: any) {
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      alert('Registration successful! Please log in.');
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+
+      const newUser: User = {
+        id: userCredential.user.uid,
+        name: name.trim(),
+        email: email.trim(),
+        role: 'user',
+        verified: false,
+        clubName: clubName.trim(),
+        urapPosition: urapPosition.trim(),
+        createdAt: new Date().toISOString(),
+      };
+
+      await createUserInFirestore(newUser);
+
+      // createUserWithEmailAndPassword signs the new account in automatically;
+      // sign back out since it isn't verified yet and shouldn't be usable.
+      await auth.signOut();
+
+      alert('Account created! A superadmin needs to verify your account before you can log in.');
       navigation.navigate('Login');
-    }, 1500);
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      if (err.code === 'auth/email-already-in-use') {
+        alert('An account with this email already exists');
+      } else if (err.code === 'auth/invalid-email') {
+        alert('Invalid email format');
+      } else if (err.code === 'auth/weak-password') {
+        alert('Password is too weak');
+      } else {
+        alert(err.message || 'Registration failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -88,6 +135,34 @@ export default function RegisterScreen({ navigation }: any) {
                 value={email}
                 onChangeText={setEmail}
                 editable={!loading}
+              />
+            </View>
+
+            {/* Club Name Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Club Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your riding club's name"
+                placeholderTextColor={Colors.textSecondary}
+                value={clubName}
+                onChangeText={setClubName}
+                editable={!loading}
+                autoCapitalize="words"
+              />
+            </View>
+
+            {/* URAP Position Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>URAP Position</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Admin, Member, President"
+                placeholderTextColor={Colors.textSecondary}
+                value={urapPosition}
+                onChangeText={setUrapPosition}
+                editable={!loading}
+                autoCapitalize="words"
               />
             </View>
 

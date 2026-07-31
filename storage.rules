@@ -1,0 +1,21 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isVerified() {
+      return request.auth != null &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.verified == true;
+    }
+
+    match /posts/{fileName} {
+      // Anyone using the feed can view post images.
+      allow read: if isVerified();
+
+      // Only verified accounts can upload, and only actual images under 5MB.
+      allow write: if isVerified()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

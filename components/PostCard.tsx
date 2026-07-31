@@ -73,7 +73,7 @@ export default function PostCard({
           <View style={styles.authorDetails}>
             <View style={styles.nameRow}>
               <Text style={styles.authorName}>{post.author.name}</Text>
-              {post.author.role === 'admin' && (
+              {(post.author.role === 'admin' || post.author.role === 'superadmin') && (
                 <View style={styles.adminBadge}>
                   <Text style={styles.adminText}>ADMIN</Text>
                 </View>

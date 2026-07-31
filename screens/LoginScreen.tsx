@@ -45,9 +45,15 @@ export default function LoginScreen({ navigation }: any) {
       const userProfile = await fetchUserProfile(user.uid);
 
       if (userProfile) {
+        if (!userProfile.verified) {
+          await auth.signOut();
+          setError('Your account is pending verification by a superadmin.');
+          return;
+        }
+
         // Store user in context
         setCurrentUser(userProfile);
-        
+
         // Navigate to Home screen
         navigation.reset({
           index: 0,
@@ -138,6 +144,14 @@ export default function LoginScreen({ navigation }: any) {
                 <Text style={styles.loginButtonText}>Login</Text>
               )}
             </TouchableOpacity>
+
+            {/* Register Link */}
+            <View style={styles.registerLink}>
+              <Text style={styles.registerText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.registerLinkText}>Sign up</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
         </View>
@@ -235,5 +249,21 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 16,
     lineHeight: 20,
+  },
+  registerLink: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.md,
+  },
+  registerText: {
+    ...Fonts.regular,
+    color: Colors.textSecondary,
+    fontSize: 13,
+  },
+  registerLinkText: {
+    ...Fonts.semibold,
+    color: Colors.primary,
+    fontSize: 13,
   },
 });

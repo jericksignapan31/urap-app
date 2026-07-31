@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, getDocs, collection, query, where } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, getDoc, getDocs, collection, query, where } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '../firebase/firebaseConfig';
 import { User } from '../types';
@@ -13,7 +13,10 @@ export const createUserInFirestore = async (userData: User) => {
       name: userData.name,
       email: userData.email,
       role: userData.role,
-      avatar: userData.avatar,
+      verified: userData.verified,
+      avatar: userData.avatar || null,
+      clubName: userData.clubName || null,
+      urapPosition: userData.urapPosition || null,
       createdAt: userData.createdAt,
     });
     console.log('User created in Firestore:', userData.email);
@@ -105,6 +108,51 @@ export const updateUserProfile = async (uid: string, updates: Partial<User>) => 
     return true;
   } catch (error) {
     console.error('Error updating user profile:', error);
+    throw error;
+  }
+};
+
+// Get all users awaiting superadmin verification
+export const getPendingUsers = async (): Promise<User[]> => {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('verified', '==', false));
+    const querySnapshot = await getDocs(q);
+
+    const users: User[] = [];
+    querySnapshot.forEach((doc) => {
+      users.push(doc.data() as User);
+    });
+
+    return users;
+  } catch (error) {
+    console.error('Error getting pending users:', error);
+    throw error;
+  }
+};
+
+// Approve a pending account so it can log in
+export const verifyUser = async (uid: string) => {
+  try {
+    const userDocRef = doc(db, 'users', uid);
+    await updateDoc(userDocRef, { verified: true });
+    console.log('User verified:', uid);
+  } catch (error) {
+    console.error('Error verifying user:', error);
+    throw error;
+  }
+};
+
+// Reject a pending account. This only removes the Firestore profile —
+// the underlying Firebase Auth account must be deleted separately from the
+// Firebase Console (or via the Admin SDK), since that isn't possible from the client.
+export const rejectUser = async (uid: string) => {
+  try {
+    const userDocRef = doc(db, 'users', uid);
+    await deleteDoc(userDocRef);
+    console.log('User rejected:', uid);
+  } catch (error) {
+    console.error('Error rejecting user:', error);
     throw error;
   }
 };

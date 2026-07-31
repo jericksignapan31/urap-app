@@ -1,5 +1,5 @@
 // User roles
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'superadmin' | 'admin' | 'user';
 
 // User type
 export interface User {
@@ -7,7 +7,10 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  verified: boolean; // Must be approved by a superadmin before login is allowed
   avatar?: string;
+  clubName?: string;
+  urapPosition?: string;
   createdAt: string;
 }
 
@@ -28,19 +31,6 @@ export interface Post {
   commentsCount: number;
   likesCount: number;
   liked?: boolean; // Whether current user has liked this post
-}
-
-// Comment type
-export interface Comment {
-  id: string;
-  postId: string;
-  authorId: string;
-  author: {
-    name: string;
-    avatar?: string;
-  };
-  content: string;
-  createdAt: string;
 }
 
 // Comment type

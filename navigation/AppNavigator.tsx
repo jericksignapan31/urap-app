@@ -6,11 +6,13 @@ import { Text } from 'react-native';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
 import CreatePostScreen from '../screens/CreatePostScreen';
 import CommentsScreen from '../screens/CommentsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import PendingUsersScreen from '../screens/PendingUsersScreen';
 
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
@@ -57,6 +59,10 @@ function ProfileStack() {
       <Stack.Screen
         name="EditProfile"
         component={EditProfileScreen}
+      />
+      <Stack.Screen
+        name="PendingUsers"
+        component={PendingUsersScreen}
       />
     </Stack.Navigator>
   );
@@ -116,10 +122,14 @@ export default function AppNavigator() {
           headerShown: false,
         }}
       >
-        {/* Auth Screen */}
+        {/* Auth Screens */}
         <Stack.Screen
           name="Login"
           component={LoginScreen}
+        />
+        <Stack.Screen
+          name="Register"
+          component={RegisterScreen}
         />
 
         {/* Main App Screens - Tab Navigator */}

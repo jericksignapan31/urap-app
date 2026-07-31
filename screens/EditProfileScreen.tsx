@@ -23,6 +23,8 @@ export default function EditProfileScreen({ navigation }: any) {
   const { currentUser, fetchUserProfile } = useUser();
   const [name, setName] = useState(currentUser?.name || '');
   const [avatar, setAvatar] = useState(currentUser?.avatar || '');
+  const [clubName, setClubName] = useState(currentUser?.clubName || '');
+  const [urapPosition, setUrapPosition] = useState(currentUser?.urapPosition || '');
   const [loading, setLoading] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
@@ -40,6 +42,8 @@ export default function EditProfileScreen({ navigation }: any) {
       await updateDoc(userDocRef, {
         name: name.trim(),
         avatar: avatar.trim() || currentUser?.avatar,
+        clubName: clubName.trim(),
+        urapPosition: urapPosition.trim(),
       });
 
       // Refresh user profile from Firebase
@@ -133,6 +137,32 @@ export default function EditProfileScreen({ navigation }: any) {
             </Text>
           </View>
 
+          {/* Club Name Input */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Club Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your riding club's name"
+              placeholderTextColor={Colors.textSecondary}
+              value={clubName}
+              onChangeText={setClubName}
+              editable={!loading}
+            />
+          </View>
+
+          {/* URAP Position Input */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>URAP Position</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Member, Admin, President"
+              placeholderTextColor={Colors.textSecondary}
+              value={urapPosition}
+              onChangeText={setUrapPosition}
+              editable={!loading}
+            />
+          </View>
+
           {/* Email Display (Read-only) */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Email (cannot be changed)</Text>
@@ -146,7 +176,11 @@ export default function EditProfileScreen({ navigation }: any) {
             <Text style={styles.label}>Role (cannot be changed)</Text>
             <View style={[styles.input, styles.readOnlyInput]}>
               <Text style={styles.readOnlyText}>
-                {currentUser.role === 'admin' ? 'Administrator' : 'Member'}
+                {currentUser.role === 'superadmin'
+                  ? 'Superadmin'
+                  : currentUser.role === 'admin'
+                  ? 'Administrator'
+                  : 'Member'}
               </Text>
             </View>
           </View>

@@ -49,6 +49,10 @@ export default function ProfileScreen({ navigation }: any) {
     navigation.navigate('EditProfile');
   };
 
+  const handleVerifyAccounts = () => {
+    navigation.navigate('PendingUsers');
+  };
+
   if (!currentUser) {
     return (
       <SafeAreaView style={styles.container}>
@@ -101,7 +105,7 @@ export default function ProfileScreen({ navigation }: any) {
           <View
             style={[
               styles.roleBadge,
-              currentUser.role === 'admin'
+              currentUser.role === 'admin' || currentUser.role === 'superadmin'
                 ? styles.adminBadge
                 : styles.userBadge,
             ]}
@@ -109,7 +113,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text
               style={[
                 styles.roleText,
-                currentUser.role === 'admin'
+                currentUser.role === 'admin' || currentUser.role === 'superadmin'
                   ? styles.adminRoleText
                   : styles.userRoleText,
               ]}
@@ -134,11 +138,27 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={[styles.infoRow, styles.infoBorder]}>
               <Text style={styles.infoLabel}>Account Type</Text>
               <Text style={styles.infoValue}>
-                {currentUser.role === 'admin'
+                {currentUser.role === 'superadmin'
+                  ? 'Superadmin'
+                  : currentUser.role === 'admin'
                   ? 'Administrator'
                   : 'Regular Member'}
               </Text>
             </View>
+
+            {currentUser.clubName && (
+              <View style={[styles.infoRow, styles.infoBorder]}>
+                <Text style={styles.infoLabel}>Club Name</Text>
+                <Text style={styles.infoValue}>{currentUser.clubName}</Text>
+              </View>
+            )}
+
+            {currentUser.urapPosition && (
+              <View style={[styles.infoRow, styles.infoBorder]}>
+                <Text style={styles.infoLabel}>URAP Position</Text>
+                <Text style={styles.infoValue}>{currentUser.urapPosition}</Text>
+              </View>
+            )}
 
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Email Status</Text>
@@ -155,6 +175,15 @@ export default function ProfileScreen({ navigation }: any) {
           >
             <Text style={styles.actionButtonText}>✏️ Edit Profile</Text>
           </TouchableOpacity>
+
+          {currentUser.role === 'superadmin' && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleVerifyAccounts}
+            >
+              <Text style={styles.actionButtonText}>🛡️ Verify Accounts</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.actionButton, styles.logoutButton]}
@@ -182,14 +211,14 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.permissionRow}>
               <Text style={styles.permissionText}>✓ Comment on Posts</Text>
             </View>
-            {currentUser.role === 'admin' && (
+            {(currentUser.role === 'admin' || currentUser.role === 'superadmin') && (
               <View style={styles.permissionRow}>
                 <Text style={styles.permissionText}>✓ Create Announcements</Text>
               </View>
             )}
-            {currentUser.role === 'admin' && (
+            {currentUser.role === 'superadmin' && (
               <View style={styles.permissionRow}>
-                <Text style={styles.permissionText}>✓ Manage Users</Text>
+                <Text style={styles.permissionText}>✓ Verify & Manage Users</Text>
               </View>
             )}
           </View>

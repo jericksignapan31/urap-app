@@ -6,6 +6,7 @@ export const currentUser: User = {
   name: 'John Rider',
   email: 'john@urap.ph',
   role: 'user',
+  verified: true,
   avatar: 'https://via.placeholder.com/50',
   createdAt: '2024-01-01',
 };
@@ -17,6 +18,7 @@ export const mockUsers: User[] = [
     name: 'John Rider',
     email: 'john@urap.ph',
     role: 'user',
+    verified: true,
     avatar: 'https://via.placeholder.com/50',
     createdAt: '2024-01-01',
   },
@@ -25,6 +27,7 @@ export const mockUsers: User[] = [
     name: 'Maria Admin',
     email: 'maria@urap.ph',
     role: 'admin',
+    verified: true,
     avatar: 'https://via.placeholder.com/50',
     createdAt: '2024-01-01',
   },
@@ -33,6 +36,7 @@ export const mockUsers: User[] = [
     name: 'Pedro Rider',
     email: 'pedro@urap.ph',
     role: 'user',
+    verified: true,
     avatar: 'https://via.placeholder.com/50',
     createdAt: '2024-01-02',
   },
@@ -54,6 +58,7 @@ export const mockPosts: Post[] = [
     createdAt: '2024-07-27T10:30:00Z',
     updatedAt: '2024-07-27T10:30:00Z',
     commentsCount: 5,
+    likesCount: 0,
   },
   {
     id: '2',
@@ -69,6 +74,7 @@ export const mockPosts: Post[] = [
     createdAt: '2024-07-26T14:15:00Z',
     updatedAt: '2024-07-26T14:15:00Z',
     commentsCount: 12,
+    likesCount: 0,
   },
   {
     id: '3',
@@ -83,6 +89,7 @@ export const mockPosts: Post[] = [
     createdAt: '2024-07-25T09:00:00Z',
     updatedAt: '2024-07-25T09:00:00Z',
     commentsCount: 8,
+    likesCount: 0,
   },
 ];
 
