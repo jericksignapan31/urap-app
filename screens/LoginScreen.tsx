@@ -21,8 +21,8 @@ import Radius from '../theme/radius';
 import Shadows from '../theme/shadows';
 
 export default function LoginScreen({ navigation }: any) {
-  const [email, setEmail] = useState('john@urap.ph');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { setCurrentUser, fetchUserProfile } = useUser();
