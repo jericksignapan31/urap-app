@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "URAP",
-    "slug": "URAP",
+    "slug": "angular",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -22,8 +22,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "05326757-0024-4d9b-b634-bf8dae0b5d59"
+        "projectId": "50789812-d9f2-4f65-beca-2a4c7cb3ebf0"
       }
-    }
+    },
+    "owner": "angulardevs-team"
   }
 }
