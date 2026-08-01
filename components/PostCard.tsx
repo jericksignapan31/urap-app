@@ -15,6 +15,7 @@ import Fonts from '../theme/fonts';
 import Spacing from '../theme/spacing';
 import Radius from '../theme/radius';
 import Shadows from '../theme/shadows';
+import PostActionSheet from './PostActionSheet';
 
 interface PostCardProps {
   post: Post;
@@ -22,6 +23,9 @@ interface PostCardProps {
   onCommentPress?: (postId: string) => void;
   onLikePress?: (postId: string, isLiked: boolean) => void;
   onAuthorPress?: (authorId: string) => void;
+  canModify?: boolean;
+  onEditPress?: (post: Post) => void;
+  onDeletePress?: (postId: string) => void;
 }
 
 export default function PostCard({
@@ -30,11 +34,15 @@ export default function PostCard({
   onCommentPress,
   onLikePress,
   onAuthorPress,
+  canModify,
+  onEditPress,
+  onDeletePress,
 }: PostCardProps) {
   const [isLiked, setIsLiked] = useState(post.liked || false);
   const [likeCount, setLikeCount] = useState(post.likesCount || 0);
   const [avatarError, setAvatarError] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
 
   // Re-sync local like state when fresh data arrives from the real-time
   // posts subscription (e.g. another user liked this post).
@@ -98,9 +106,11 @@ export default function PostCard({
             <Text style={styles.timestamp}>{formatDate(post.createdAt)}</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.moreButton}>⋯</Text>
-        </TouchableOpacity>
+        {canModify && (
+          <TouchableOpacity onPress={() => setActionSheetVisible(true)}>
+            <Text style={styles.moreButton}>⋯</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Content - Title and Text */}
@@ -177,6 +187,21 @@ export default function PostCard({
             />
           </Pressable>
         </Modal>
+      )}
+
+      {canModify && (
+        <PostActionSheet
+          visible={actionSheetVisible}
+          onClose={() => setActionSheetVisible(false)}
+          onEdit={() => {
+            setActionSheetVisible(false);
+            onEditPress?.(post);
+          }}
+          onDelete={() => {
+            setActionSheetVisible(false);
+            onDeletePress?.(post.id);
+          }}
+        />
       )}
     </Pressable>
   );

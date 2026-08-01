@@ -69,17 +69,18 @@ service cloud.firestore {
       // Only the declared author may create a post, and only once verified.
       allow create: if isVerified() && request.resource.data.authorId == request.auth.uid;
 
-      // Full edits: the post's own author, or admin/superadmin.
+      // Full edits: the post's own author, or superadmin only (regular admins can
+      // create announcements but do not moderate other members' posts).
       // Everyone else who is verified may still update ONLY the like/comment-count
       // bookkeeping fields (this is what likePost/unlikePost/incrementCommentsCount need).
       allow update: if isVerified() && (
         resource.data.authorId == request.auth.uid
-        || isAdminOrAbove()
+        || isSuperadmin()
         || request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['likes', 'likesCount', 'commentsCount', 'updatedAt'])
       );
 
-      allow delete: if isVerified() && (resource.data.authorId == request.auth.uid || isAdminOrAbove());
+      allow delete: if isVerified() && (resource.data.authorId == request.auth.uid || isSuperadmin());
     }
 
     match /comments/{commentId} {

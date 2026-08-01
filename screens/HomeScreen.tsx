@@ -11,8 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Post } from '../types';
 import PostCard from '../components/PostCard';
-import { subscribeToPosts, likePost, unlikePost } from '../services/postService';
+import { subscribeToPosts, likePost, unlikePost, deletePost } from '../services/postService';
 import { useUser } from '../context/UserContext';
+import { useAlert } from '../context/AlertContext';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
 import Spacing from '../theme/spacing';
@@ -24,6 +25,7 @@ export default function HomeScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [avatarError, setAvatarError] = useState(false);
   const { currentUser } = useUser();
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     setLoading(true);
@@ -75,6 +77,40 @@ export default function HomeScreen({ navigation }: any) {
 
   const handleCreatePost = () => {
     navigation.navigate('CreatePost');
+  };
+
+  const canModifyPost = (post: Post) => {
+    if (!currentUser) return false;
+    // Only the post's own author, or a superadmin, may edit/delete it.
+    // Regular admins can create announcements but not moderate others' posts.
+    return post.authorId === currentUser.id || currentUser.role === 'superadmin';
+  };
+
+  const handleEditPress = (post: Post) => {
+    navigation.navigate('EditPost', { post });
+  };
+
+  const handleDeletePress = (postId: string) => {
+    showAlert({
+      type: 'warning',
+      title: 'Delete Post?',
+      message: 'This cannot be undone.',
+      buttons: [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePost(postId);
+            } catch (error) {
+              console.error('Error deleting post:', error);
+              showAlert({ type: 'error', title: 'Error', message: 'Failed to delete post' });
+            }
+          },
+        },
+      ],
+    });
   };
 
   const renderHeader = () => (
@@ -146,6 +182,9 @@ export default function HomeScreen({ navigation }: any) {
             onCommentPress={handleCommentPress}
             onLikePress={handleLikePress}
             onAuthorPress={handleAuthorPress}
+            canModify={canModifyPost(item)}
+            onEditPress={handleEditPress}
+            onDeletePress={handleDeletePress}
           />
         )}
         keyExtractor={(item) => item.id}

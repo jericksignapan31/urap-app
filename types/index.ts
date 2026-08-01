@@ -26,7 +26,7 @@ export interface Post {
   };
   title: string;
   content: string;
-  image?: string;
+  image?: string | null;
   createdAt: string;
   updatedAt: string;
   commentsCount: number;

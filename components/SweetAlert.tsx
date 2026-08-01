@@ -11,7 +11,7 @@ export type AlertType = 'success' | 'error' | 'info' | 'warning';
 export interface AlertButton {
   text: string;
   onPress?: () => void;
-  style?: 'default' | 'cancel';
+  style?: 'default' | 'cancel' | 'destructive';
 }
 
 export interface AlertOptions {
@@ -65,7 +65,11 @@ export default function SweetAlert({ visible, options, onButtonPress }: SweetAle
                 key={index}
                 style={[
                   styles.button,
-                  button.style === 'cancel' ? styles.cancelButton : styles.defaultButton,
+                  button.style === 'cancel'
+                    ? styles.cancelButton
+                    : button.style === 'destructive'
+                    ? styles.destructiveButton
+                    : styles.defaultButton,
                   buttons.length > 1 && index > 0 && { marginLeft: Spacing.sm },
                 ]}
                 onPress={() => onButtonPress(button)}
@@ -146,6 +150,9 @@ const styles = StyleSheet.create({
   },
   defaultButton: {
     backgroundColor: Colors.primary,
+  },
+  destructiveButton: {
+    backgroundColor: Colors.danger,
   },
   cancelButton: {
     backgroundColor: Colors.background,

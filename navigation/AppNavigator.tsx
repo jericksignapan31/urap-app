@@ -9,6 +9,7 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
 import CreatePostScreen from '../screens/CreatePostScreen';
+import EditPostScreen from '../screens/EditPostScreen';
 import CommentsScreen from '../screens/CommentsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
@@ -40,6 +41,10 @@ function HomeStack() {
       <Stack.Screen
         name="CreatePost"
         component={CreatePostScreen}
+      />
+      <Stack.Screen
+        name="EditPost"
+        component={EditPostScreen}
       />
       <Stack.Screen
         name="UserProfile"
