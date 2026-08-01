@@ -193,7 +193,11 @@ export default function CommentsScreen({ route, navigation }: any) {
       {/* Post Preview */}
       {post && (
         <View style={styles.postPreview}>
-          <View style={styles.postHeader}>
+          <TouchableOpacity
+            style={styles.postHeader}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('UserProfile', { userId: post.authorId })}
+          >
             <Image
               source={{ uri: post.author.avatar }}
               style={styles.postAvatar}
@@ -204,7 +208,7 @@ export default function CommentsScreen({ route, navigation }: any) {
                 {new Date(post.createdAt).toLocaleDateString()}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
           <Text style={styles.postTitle}>{post.title}</Text>
           <Text style={styles.postContent} numberOfLines={2}>
             {post.content}
@@ -225,28 +229,35 @@ export default function CommentsScreen({ route, navigation }: any) {
 
     return (
       <View style={styles.commentItem}>
-        {!avatarErrors.has(item.id) ? (
-          <Image
-            source={{ uri: item.author.avatar || 'https://ui-avatars.com/api/?name=' + item.author.name }}
-            style={styles.commentAvatar}
-            onError={() => setAvatarErrors(new Set([...avatarErrors, item.id]))}
-          />
-        ) : (
-          <View style={[styles.commentAvatar, styles.fallbackCommentAvatar]}>
-            <Text style={styles.fallbackCommentInitial}>
-              {item.author.name.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-        )}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('UserProfile', { userId: item.authorId })}
+        >
+          {!avatarErrors.has(item.id) ? (
+            <Image
+              source={{ uri: item.author.avatar || 'https://ui-avatars.com/api/?name=' + item.author.name }}
+              style={styles.commentAvatar}
+              onError={() => setAvatarErrors(new Set([...avatarErrors, item.id]))}
+            />
+          ) : (
+            <View style={[styles.commentAvatar, styles.fallbackCommentAvatar]}>
+              <Text style={styles.fallbackCommentInitial}>
+                {item.author.name.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
         <View style={styles.commentContent}>
-          <View style={styles.commentHeader}>
+          <TouchableOpacity
+            style={styles.commentHeader}
+            onPress={() => navigation.navigate('UserProfile', { userId: item.authorId })}
+          >
             <Text style={styles.commentAuthor}>{item.author.name}</Text>
             {(item.author.role === 'admin' || item.author.role === 'superadmin') && (
               <View style={styles.adminBadge}>
                 <Text style={styles.adminText}>ADMIN</Text>
               </View>
             )}
-          </View>
+          </TouchableOpacity>
           <Text style={styles.commentTime}>
             {formatTime(item.createdAt)}
           </Text>

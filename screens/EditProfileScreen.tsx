@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -86,8 +87,9 @@ export default function EditProfileScreen({ navigation }: any) {
       // Refresh user profile from Firebase
       await fetchUserProfile(currentUser!.id);
 
-      alert('Profile updated successfully!');
-      navigation.goBack();
+      Alert.alert('Success', 'Profile updated successfully!', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Failed to update profile');

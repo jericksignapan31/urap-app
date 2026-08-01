@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -72,12 +73,15 @@ export default function RegisterScreen({ navigation }: any) {
 
       await createUserInFirestore(newUser);
 
-      // createUserWithEmailAndPassword signs the new account in automatically;
-      // sign back out since it isn't verified yet and shouldn't be usable.
-      await auth.signOut();
-
-      alert('Account created! A superadmin needs to verify your account before you can log in.');
-      navigation.navigate('Login');
+      // createUserWithEmailAndPassword signs the new account in automatically.
+      // Don't sign out here: UserContext's onAuthStateChanged listener already
+      // signs out any unverified account as soon as it sees the profile, and
+      // calling signOut() again concurrently from here caused it to hang.
+      Alert.alert(
+        'Account Created',
+        'A superadmin needs to verify your account before you can log in.',
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+      );
     } catch (err: any) {
       console.error('Registration error:', err);
       if (err.code === 'auth/email-already-in-use') {

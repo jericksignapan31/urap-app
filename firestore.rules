@@ -38,8 +38,9 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Users can read their own profile (needed at login); superadmin can read/list everyone
-      // (needed for the pending-accounts queue).
-      allow read: if isOwner(userId) || isSuperadmin();
+      // (needed for the pending-accounts queue); any verified member can view another
+      // member's profile page (post/comment authors are already public within the feed).
+      allow read: if isOwner(userId) || isSuperadmin() || isVerified();
 
       // Registration: a user may only ever create THEIR OWN profile, and it must start
       // as an unverified regular user. This is what stops self-registering as admin/superadmin.

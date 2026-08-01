@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,53 +9,62 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useUser } from '../context/UserContext';
+import { getUserFromFirestore } from '../services/userService';
+import { User } from '../types';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
 import Spacing from '../theme/spacing';
 import Radius from '../theme/radius';
 import Shadows from '../theme/shadows';
 
-export default function ProfileScreen({ navigation }: any) {
-  const { currentUser, logout } = useUser();
+export default function UserProfileScreen({ route, navigation }: any) {
+  const { userId } = route.params;
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [avatarError, setAvatarError] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      setLoggingOut(true);
-      // logout() (from UserContext) handles both the Firebase signOut and
-      // clearing currentUser — don't call signOut() again here, since a
-      // second concurrent call caused it to hang.
-      await logout();
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        setLoading(true);
+        const fetchedUser = await getUserFromFirestore(userId);
+        setUser(fetchedUser);
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        alert('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      // Navigate to login
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-      alert('Failed to logout');
-    } finally {
-      setLoggingOut(false);
-    }
-  };
+    loadUser();
+  }, [userId]);
 
-  const handleEditProfile = () => {
-    navigation.navigate('EditProfile');
-  };
-
-  const handleVerifyAccounts = () => {
-    navigation.navigate('PendingUsers');
-  };
-
-  if (!currentUser) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <View style={{ width: 30 }} />
+        </View>
+        <View style={styles.centerContent}>
+          <Text style={styles.notFoundText}>User not found</Text>
         </View>
       </SafeAreaView>
     );
@@ -80,29 +89,24 @@ export default function ProfileScreen({ navigation }: any) {
         <View style={styles.profileCard}>
           {!avatarError ? (
             <Image
-              source={{ uri: currentUser.avatar || 'https://ui-avatars.com/api/?name=' + currentUser.name }}
+              source={{ uri: user.avatar || 'https://ui-avatars.com/api/?name=' + user.name }}
               style={styles.avatar}
-              onError={(error) => {
-                console.log('Avatar load error:', error);
-                console.log('Avatar URL:', currentUser.avatar);
-                setAvatarError(true);
-              }}
-              onLoad={() => console.log('Avatar loaded successfully')}
+              onError={() => setAvatarError(true)}
             />
           ) : (
             <View style={[styles.avatar, styles.fallbackAvatar]}>
               <Text style={styles.fallbackInitial}>
-                {currentUser.name.charAt(0).toUpperCase()}
+                {user.name.charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
-          <Text style={styles.name}>{currentUser.name}</Text>
-          <Text style={styles.email}>{currentUser.email}</Text>
+          <Text style={styles.name}>{user.name}</Text>
+          {!!user.nickname && <Text style={styles.nickname}>"{user.nickname}"</Text>}
           {/* Role Badge */}
           <View
             style={[
               styles.roleBadge,
-              currentUser.role === 'admin' || currentUser.role === 'superadmin'
+              user.role === 'admin' || user.role === 'superadmin'
                 ? styles.adminBadge
                 : styles.userBadge,
             ]}
@@ -110,97 +114,40 @@ export default function ProfileScreen({ navigation }: any) {
             <Text
               style={[
                 styles.roleText,
-                currentUser.role === 'admin' || currentUser.role === 'superadmin'
+                user.role === 'admin' || user.role === 'superadmin'
                   ? styles.adminRoleText
                   : styles.userRoleText,
               ]}
             >
-              {currentUser.role.toUpperCase()}
+              {user.role.toUpperCase()}
             </Text>
           </View>
         </View>
 
-        {/* Account Info */}
+        {/* Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Information</Text>
-          
+          <Text style={styles.sectionTitle}>Information</Text>
+
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Full Name</Text>
-              <Text style={styles.infoValue}>{currentUser.name}</Text>
+              <Text style={styles.infoValue}>{user.name}</Text>
             </View>
 
             <View style={[styles.infoRow, styles.infoBorder]}>
               <Text style={styles.infoLabel}>Nickname</Text>
-              <Text style={styles.infoValue}>{currentUser.nickname || '—'}</Text>
+              <Text style={styles.infoValue}>{user.nickname || '—'}</Text>
             </View>
 
             <View style={[styles.infoRow, styles.infoBorder]}>
               <Text style={styles.infoLabel}>Club Name</Text>
-              <Text style={styles.infoValue}>{currentUser.clubName || '—'}</Text>
+              <Text style={styles.infoValue}>{user.clubName || '—'}</Text>
             </View>
 
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>URAP Position</Text>
-              <Text style={styles.infoValue}>{currentUser.urapPosition || '—'}</Text>
+              <Text style={styles.infoValue}>{user.urapPosition || '—'}</Text>
             </View>
-          </View>
-        </View>
-
-        {/* Actions */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleEditProfile}
-          >
-            <Text style={styles.actionButtonText}>✏️ Edit Profile</Text>
-          </TouchableOpacity>
-
-          {currentUser.role === 'superadmin' && (
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleVerifyAccounts}
-            >
-              <Text style={styles.actionButtonText}>🛡️ Verify Accounts</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity
-            style={[styles.actionButton, styles.logoutButton]}
-            onPress={handleLogout}
-            disabled={loggingOut}
-          >
-            {loggingOut ? (
-              <ActivityIndicator size="small" color={Colors.danger} />
-            ) : (
-              <Text style={[styles.actionButtonText, styles.logoutButtonText]}>
-                🚪 Logout
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Permissions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Permissions</Text>
-          
-          <View style={styles.permissionCard}>
-            <View style={styles.permissionRow}>
-              <Text style={styles.permissionText}>✓ View Announcements</Text>
-            </View>
-            <View style={styles.permissionRow}>
-              <Text style={styles.permissionText}>✓ Comment on Posts</Text>
-            </View>
-            {(currentUser.role === 'admin' || currentUser.role === 'superadmin') && (
-              <View style={styles.permissionRow}>
-                <Text style={styles.permissionText}>✓ Create Announcements</Text>
-              </View>
-            )}
-            {currentUser.role === 'superadmin' && (
-              <View style={styles.permissionRow}>
-                <Text style={styles.permissionText}>✓ Verify & Manage Users</Text>
-              </View>
-            )}
           </View>
         </View>
 
@@ -220,11 +167,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
+  notFoundText: {
     ...Fonts.regular,
     color: Colors.textSecondary,
     fontSize: 14,
-    marginTop: Spacing.md,
   },
   header: {
     backgroundColor: Colors.primary,
@@ -289,10 +235,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: Spacing.xs,
   },
-  email: {
+  nickname: {
     ...Fonts.regular,
     color: Colors.textSecondary,
     fontSize: 13,
+    fontStyle: 'italic',
     marginBottom: Spacing.md,
   },
   roleBadge: {
@@ -352,46 +299,6 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     ...Fonts.semibold,
-    color: Colors.text,
-    fontSize: 13,
-  },
-  actionButton: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.primary,
-    ...Shadows.md,
-  },
-  actionButtonText: {
-    ...Fonts.semibold,
-    color: Colors.primary,
-    fontSize: 14,
-  },
-  logoutButton: {
-    backgroundColor: Colors.white,
-    borderColor: '#FF6B6B',
-  },
-  logoutButtonText: {
-    color: '#FF6B6B',
-  },
-  permissionCard: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-    ...Shadows.md,
-  },
-  permissionRow: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-  },
-  permissionText: {
-    ...Fonts.regular,
     color: Colors.text,
     fontSize: 13,
   },

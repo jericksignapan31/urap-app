@@ -71,10 +71,11 @@ export default function CreatePostScreen({ navigation }: any) {
         uploadedImageUrl
       );
 
-      alert('Post created successfully!');
       setContent('');
       setImageUri(null);
-      navigation.goBack();
+      Alert.alert('Success', 'Post created successfully!', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
     } catch (error) {
       console.error('Error creating post:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';

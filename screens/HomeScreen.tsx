@@ -51,6 +51,10 @@ export default function HomeScreen({ navigation }: any) {
     navigation.navigate('Comments', { postId });
   };
 
+  const handleAuthorPress = (authorId: string) => {
+    navigation.navigate('UserProfile', { userId: authorId });
+  };
+
   const handleLikePress = async (postId: string, isLiked: boolean) => {
     try {
       if (!currentUser) {
@@ -141,6 +145,7 @@ export default function HomeScreen({ navigation }: any) {
             onPress={() => handlePostPress(item.id)}
             onCommentPress={handleCommentPress}
             onLikePress={handleLikePress}
+            onAuthorPress={handleAuthorPress}
           />
         )}
         keyExtractor={(item) => item.id}

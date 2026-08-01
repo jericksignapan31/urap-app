@@ -13,6 +13,7 @@ import CommentsScreen from '../screens/CommentsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import PendingUsersScreen from '../screens/PendingUsersScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
 
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
@@ -39,6 +40,10 @@ function HomeStack() {
       <Stack.Screen
         name="CreatePost"
         component={CreatePostScreen}
+      />
+      <Stack.Screen
+        name="UserProfile"
+        component={UserProfileScreen}
       />
     </Stack.Navigator>
   );

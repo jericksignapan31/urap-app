@@ -21,6 +21,7 @@ interface PostCardProps {
   onPress?: () => void;
   onCommentPress?: (postId: string) => void;
   onLikePress?: (postId: string, isLiked: boolean) => void;
+  onAuthorPress?: (authorId: string) => void;
 }
 
 export default function PostCard({
@@ -28,6 +29,7 @@ export default function PostCard({
   onPress,
   onCommentPress,
   onLikePress,
+  onAuthorPress,
 }: PostCardProps) {
   const [isLiked, setIsLiked] = useState(post.liked || false);
   const [likeCount, setLikeCount] = useState(post.likesCount || 0);
@@ -66,7 +68,11 @@ export default function PostCard({
     <Pressable onPress={onPress} style={styles.container}>
       {/* Header - Author Info */}
       <View style={styles.header}>
-        <View style={styles.authorInfo}>
+        <TouchableOpacity
+          style={styles.authorInfo}
+          activeOpacity={0.7}
+          onPress={() => onAuthorPress?.(post.authorId)}
+        >
           {!avatarError ? (
             <Image
               source={{ uri: post.author.avatar || 'https://ui-avatars.com/api/?name=' + post.author.name }}
@@ -91,7 +97,7 @@ export default function PostCard({
             </View>
             <Text style={styles.timestamp}>{formatDate(post.createdAt)}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity>
           <Text style={styles.moreButton}>⋯</Text>
         </TouchableOpacity>

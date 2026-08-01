@@ -7,7 +7,7 @@ interface UserContextType {
   currentUser: User | null;
   loading: boolean;
   setCurrentUser: (user: User | null) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   fetchUserProfile: (uid: string) => Promise<User | null>;
 }
 
