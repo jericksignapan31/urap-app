@@ -18,8 +18,10 @@ import Radius from '../theme/radius';
 import Shadows from '../theme/shadows';
 import { getCommentsByPostId, createComment, deleteComment } from '../services/commentService';
 import { getPostById } from '../services/postService';
+import { getAllUsers } from '../services/userService';
 import { useUser } from '../context/UserContext';
-import { Comment, Post } from '../types';
+import { Comment, Post, User } from '../types';
+import { parseMentions, encodeMentions } from '../utils/mentions';
 import {
   Keyboard,
 } from 'react-native';
@@ -34,6 +36,9 @@ export default function CommentsScreen({ route, navigation }: any) {
   const [avatarErrors, setAvatarErrors] = useState<Set<string>>(new Set());
   const { currentUser } = useUser();
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [pendingMentions, setPendingMentions] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
 
@@ -60,6 +65,9 @@ export default function CommentsScreen({ route, navigation }: any) {
 
   useEffect(() => {
     loadPostAndComments();
+    getAllUsers().then(setAllUsers).catch((error) => {
+      console.error('Error loading users for mentions:', error);
+    });
   }, []);
 
   const loadPostAndComments = async () => {
@@ -124,6 +132,30 @@ export default function CommentsScreen({ route, navigation }: any) {
     );
   };
 
+  const handleCommentTextChange = (text: string) => {
+    setNewComment(text);
+
+    // A mention is "active" when the text ends with @ or @partialQuery,
+    // where that @ starts a fresh token (preceded by start-of-string or
+    // whitespace) — this only supports mentioning at the end of the
+    // current text, not editing a mention earlier in the comment.
+    const match = text.match(/(?:^|\s)@(\w*)$/);
+    setMentionQuery(match ? match[1] : null);
+  };
+
+  const handleSelectMention = (user: User) => {
+    const withoutQuery = newComment.replace(/@\w*$/, '');
+    const newText = `${withoutQuery}@${user.name} `;
+    setNewComment(newText);
+    setPendingMentions([...pendingMentions, { id: user.id, name: user.name }]);
+    setMentionQuery(null);
+  };
+
+  const mentionSuggestions = allUsers
+    .filter((u) => u.id !== currentUser?.id)
+    .filter((u) => u.name.toLowerCase().includes((mentionQuery || '').toLowerCase()))
+    .slice(0, 5);
+
   const handleAddComment = async () => {
     if (!newComment.trim()) {
       alert('Please write a comment');
@@ -137,7 +169,7 @@ export default function CommentsScreen({ route, navigation }: any) {
 
     try {
       setSubmitting(true);
-      const commentText = newComment;
+      const commentText = encodeMentions(newComment, pendingMentions);
 
       // Create comment in Firebase
       const commentId = await createComment(
@@ -165,6 +197,8 @@ export default function CommentsScreen({ route, navigation }: any) {
 
       setComments([...comments, newCommentObj]);
       setNewComment('');
+      setPendingMentions([]);
+      setMentionQuery(null);
 
       console.log('Comment added successfully:', commentId);
     } catch (error) {
@@ -262,7 +296,21 @@ export default function CommentsScreen({ route, navigation }: any) {
           <Text style={styles.commentTime}>
             {formatTime(item.createdAt)}
           </Text>
-          <Text style={styles.commentText}>{item.content}</Text>
+          <Text style={styles.commentText}>
+            {parseMentions(item.content).map((segment, index) =>
+              segment.userId ? (
+                <Text
+                  key={index}
+                  style={styles.mentionText}
+                  onPress={() => navigation.navigate('UserProfile', { userId: segment.userId })}
+                >
+                  {segment.text}
+                </Text>
+              ) : (
+                <Text key={index}>{segment.text}</Text>
+              )
+            )}
+          </Text>
         </View>
         {canDelete && (
           <TouchableOpacity
@@ -304,46 +352,61 @@ export default function CommentsScreen({ route, navigation }: any) {
       {currentUser && (
         <View
           style={[
-            styles.inputContainer,
+            styles.inputOuterContainer,
             {
               bottom: Math.max(0, keyboardHeight - 48),
             },
           ]}
         >
-          {!avatarErrors.has('currentUser') ? (
-            <Image
-              source={{ uri: currentUser.avatar || 'https://ui-avatars.com/api/?name=' + currentUser.name }}
-              style={styles.userAvatar}
-              onError={() => setAvatarErrors(new Set([...avatarErrors, 'currentUser']))}
-            />
-          ) : (
-            <View style={[styles.userAvatar, styles.fallbackUserAvatar]}>
-              <Text style={styles.fallbackUserInitial}>
-                {currentUser.name.charAt(0).toUpperCase()}
-              </Text>
+          {mentionQuery !== null && mentionSuggestions.length > 0 && (
+            <View style={styles.mentionDropdown}>
+              {mentionSuggestions.map((user) => (
+                <TouchableOpacity
+                  key={user.id}
+                  style={styles.mentionSuggestion}
+                  onPress={() => handleSelectMention(user)}
+                >
+                  <Text style={styles.mentionSuggestionText}>{user.name}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           )}
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.input}
-              placeholder="Write a comment..."
-              placeholderTextColor={Colors.textSecondary}
-              value={newComment}
-              onChangeText={setNewComment}
-              multiline
-              editable={!submitting}
-            />
-            <TouchableOpacity
-              style={[styles.sendButton, submitting && styles.sendButtonDisabled]}
-              onPress={handleAddComment}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color={Colors.white} />
-              ) : (
-                <Text style={styles.sendButtonText}>Send</Text>
-              )}
-            </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            {!avatarErrors.has('currentUser') ? (
+              <Image
+                source={{ uri: currentUser.avatar || 'https://ui-avatars.com/api/?name=' + currentUser.name }}
+                style={styles.userAvatar}
+                onError={() => setAvatarErrors(new Set([...avatarErrors, 'currentUser']))}
+              />
+            ) : (
+              <View style={[styles.userAvatar, styles.fallbackUserAvatar]}>
+                <Text style={styles.fallbackUserInitial}>
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                placeholder="Write a comment... (@ to mention someone)"
+                placeholderTextColor={Colors.textSecondary}
+                value={newComment}
+                onChangeText={handleCommentTextChange}
+                multiline
+                editable={!submitting}
+              />
+              <TouchableOpacity
+                style={[styles.sendButton, submitting && styles.sendButtonDisabled]}
+                onPress={handleAddComment}
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Text style={styles.sendButtonText}>Send</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}
@@ -512,12 +575,38 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     lineHeight: 16,
   },
+  mentionText: {
+    ...Fonts.semibold,
+    color: Colors.primary,
+  },
+  inputOuterContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  mentionDropdown: {
+    backgroundColor: Colors.white,
+    marginHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: Spacing.xs,
+    overflow: 'hidden',
+    ...Shadows.md,
+  },
+  mentionSuggestion: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
+  mentionSuggestionText: {
+    ...Fonts.semibold,
+    color: Colors.text,
+    fontSize: 13,
+  },
   inputContainer: {
-  position: 'absolute',
-  left: 0,
-  right: 0,
-  bottom: 0,
-
   flexDirection: 'row',
   alignItems: 'center', // <-- palitan ito
   backgroundColor: Colors.white,
