@@ -23,7 +23,7 @@ import Radius from '../theme/radius';
 import Shadows from '../theme/shadows';
 
 export default function EditProfileScreen({ navigation }: any) {
-  const { currentUser, fetchUserProfile } = useUser();
+  const { currentUser, fetchUserProfile, setCurrentUser } = useUser();
   const [name, setName] = useState(currentUser?.name || '');
   const [nickname, setNickname] = useState(currentUser?.nickname || '');
   const [avatar, setAvatar] = useState(currentUser?.avatar || '');
@@ -84,8 +84,11 @@ export default function EditProfileScreen({ navigation }: any) {
         urapPosition: urapPosition.trim(),
       });
 
-      // Refresh user profile from Firebase
-      await fetchUserProfile(currentUser!.id);
+      // Refresh user profile from Firebase and push it into the shared context
+      // so the rest of the app (feed, post composer, profile tab) picks up the
+      // change immediately instead of showing the old avatar until next login.
+      const updatedProfile = await fetchUserProfile(currentUser!.id);
+      setCurrentUser(updatedProfile);
 
       Alert.alert('Success', 'Profile updated successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() },

@@ -24,6 +24,7 @@ export default function RegisterScreen({ navigation }: any) {
   const { showAlert } = useAlert();
   const { setAuthListenerPaused } = useUser();
   const [name, setName] = useState('');
+  const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [clubName, setClubName] = useState('');
   const [urapPosition, setUrapPosition] = useState('');
@@ -80,6 +81,7 @@ export default function RegisterScreen({ navigation }: any) {
       const newUser: User = {
         id: userCredential.user.uid,
         name: name.trim(),
+        nickname: nickname.trim(),
         email: email.trim(),
         role: 'user',
         verified: false,
@@ -148,6 +150,20 @@ export default function RegisterScreen({ navigation }: any) {
                 placeholderTextColor={Colors.textSecondary}
                 value={name}
                 onChangeText={setName}
+                editable={!loading}
+                autoCapitalize="words"
+              />
+            </View>
+
+            {/* Nickname Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Nickname (optional)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your nickname"
+                placeholderTextColor={Colors.textSecondary}
+                value={nickname}
+                onChangeText={setNickname}
                 editable={!loading}
                 autoCapitalize="words"
               />

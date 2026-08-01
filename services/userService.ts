@@ -12,6 +12,7 @@ export const createUserInFirestore = async (userData: User) => {
     await setDoc(userDocRef, {
       id: userData.id,
       name: userData.name,
+      nickname: userData.nickname || null,
       email: userData.email,
       role: userData.role,
       verified: userData.verified,
