@@ -9,11 +9,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Post } from '../types';
 import PostCard from '../components/PostCard';
 import { subscribeToPosts, likePost, unlikePost, deletePost } from '../services/postService';
 import { useUser } from '../context/UserContext';
 import { useAlert } from '../context/AlertContext';
+import { clearBadge } from '../services/notificationService';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
 import Spacing from '../theme/spacing';
@@ -43,6 +45,12 @@ export default function HomeScreen({ navigation }: any) {
 
     return () => unsubscribe();
   }, [currentUser?.id]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      clearBadge();
+    }, [])
+  );
 
   const handlePostPress = (postId: string) => {
     // Navigate to comments when post is clicked

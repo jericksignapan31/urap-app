@@ -183,6 +183,7 @@ export default function CommentsScreen({ route, navigation }: any) {
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButtonContainer}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>

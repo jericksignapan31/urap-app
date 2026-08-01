@@ -57,6 +57,7 @@ export default function UserProfileScreen({ route, navigation }: any) {
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
@@ -78,6 +79,7 @@ export default function UserProfileScreen({ route, navigation }: any) {
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
@@ -185,11 +187,11 @@ const styles = StyleSheet.create({
     ...Shadows.lg,
   },
   backButton: {
-    width: 30,
-    height: 30,
     justifyContent: 'center',
     position: 'absolute',
     left: Spacing.md,
+    paddingVertical: Spacing.xs,
+    paddingRight: Spacing.md,
   },
   backButtonText: {
     ...Fonts.semibold,
