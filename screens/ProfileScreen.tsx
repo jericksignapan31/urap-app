@@ -5,10 +5,10 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig';
 import { useUser } from '../context/UserContext';
@@ -129,40 +129,23 @@ export default function ProfileScreen({ navigation }: any) {
           
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Member Since</Text>
-              <Text style={styles.infoValue}>
-                {new Date(currentUser.createdAt).toLocaleDateString()}
-              </Text>
+              <Text style={styles.infoLabel}>Full Name</Text>
+              <Text style={styles.infoValue}>{currentUser.name}</Text>
             </View>
 
             <View style={[styles.infoRow, styles.infoBorder]}>
-              <Text style={styles.infoLabel}>Account Type</Text>
-              <Text style={styles.infoValue}>
-                {currentUser.role === 'superadmin'
-                  ? 'Superadmin'
-                  : currentUser.role === 'admin'
-                  ? 'Administrator'
-                  : 'Regular Member'}
-              </Text>
+              <Text style={styles.infoLabel}>Nickname</Text>
+              <Text style={styles.infoValue}>{currentUser.nickname || '—'}</Text>
             </View>
 
-            {currentUser.clubName && (
-              <View style={[styles.infoRow, styles.infoBorder]}>
-                <Text style={styles.infoLabel}>Club Name</Text>
-                <Text style={styles.infoValue}>{currentUser.clubName}</Text>
-              </View>
-            )}
-
-            {currentUser.urapPosition && (
-              <View style={[styles.infoRow, styles.infoBorder]}>
-                <Text style={styles.infoLabel}>URAP Position</Text>
-                <Text style={styles.infoValue}>{currentUser.urapPosition}</Text>
-              </View>
-            )}
+            <View style={[styles.infoRow, styles.infoBorder]}>
+              <Text style={styles.infoLabel}>Club Name</Text>
+              <Text style={styles.infoValue}>{currentUser.clubName || '—'}</Text>
+            </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Email Status</Text>
-              <Text style={[styles.infoValue, styles.verified]}>Verified</Text>
+              <Text style={styles.infoLabel}>URAP Position</Text>
+              <Text style={styles.infoValue}>{currentUser.urapPosition || '—'}</Text>
             </View>
           </View>
         </View>
@@ -374,9 +357,6 @@ const styles = StyleSheet.create({
     ...Fonts.semibold,
     color: Colors.text,
     fontSize: 13,
-  },
-  verified: {
-    color: Colors.success,
   },
   actionButton: {
     backgroundColor: Colors.white,

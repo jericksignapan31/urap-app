@@ -4,14 +4,14 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Image,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Post } from '../types';
 import PostCard from '../components/PostCard';
-import { getAllPosts, likePost, unlikePost } from '../services/postService';
+import { subscribeToPosts, likePost, unlikePost } from '../services/postService';
 import { useUser } from '../context/UserContext';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
@@ -26,21 +26,21 @@ export default function HomeScreen({ navigation }: any) {
   const { currentUser } = useUser();
 
   useEffect(() => {
-    loadPosts();
-  }, []);
+    setLoading(true);
+    const unsubscribe = subscribeToPosts(
+      currentUser?.id,
+      (fetchedPosts) => {
+        setPosts(fetchedPosts);
+        setLoading(false);
+      },
+      () => {
+        alert('Failed to load announcements');
+        setLoading(false);
+      }
+    );
 
-  const loadPosts = async () => {
-    try {
-      setLoading(true);
-      const fetchedPosts = await getAllPosts(currentUser?.id);
-      setPosts(fetchedPosts);
-    } catch (error) {
-      console.error('Error loading posts:', error);
-      alert('Failed to load announcements');
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => unsubscribe();
+  }, [currentUser?.id]);
 
   const handlePostPress = (postId: string) => {
     // Navigate to comments when post is clicked

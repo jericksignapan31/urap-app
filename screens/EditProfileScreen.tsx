@@ -5,13 +5,15 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
+import { uploadImageToCloudinary } from '../services/cloudinaryService';
 import { useUser } from '../context/UserContext';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
@@ -22,11 +24,45 @@ import Shadows from '../theme/shadows';
 export default function EditProfileScreen({ navigation }: any) {
   const { currentUser, fetchUserProfile } = useUser();
   const [name, setName] = useState(currentUser?.name || '');
+  const [nickname, setNickname] = useState(currentUser?.nickname || '');
   const [avatar, setAvatar] = useState(currentUser?.avatar || '');
   const [clubName, setClubName] = useState(currentUser?.clubName || '');
   const [urapPosition, setUrapPosition] = useState(currentUser?.urapPosition || '');
   const [loading, setLoading] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handlePickAvatar = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      alert('Please allow access to your photos to change your avatar');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const uploadedUrl = await uploadImageToCloudinary(result.assets[0].uri);
+      setAvatar(uploadedUrl);
+      setAvatarError(false);
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to upload avatar: ${message}`);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!name.trim()) {
@@ -41,6 +77,7 @@ export default function EditProfileScreen({ navigation }: any) {
       const userDocRef = doc(db, 'users', currentUser!.id);
       await updateDoc(userDocRef, {
         name: name.trim(),
+        nickname: nickname.trim(),
         avatar: avatar.trim() || currentUser?.avatar,
         clubName: clubName.trim(),
         urapPosition: urapPosition.trim(),
@@ -100,6 +137,18 @@ export default function EditProfileScreen({ navigation }: any) {
               </Text>
             </View>
           )}
+
+          <TouchableOpacity
+            style={styles.choosePhotoButton}
+            onPress={handlePickAvatar}
+            disabled={uploadingAvatar || loading}
+          >
+            {uploadingAvatar ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : (
+              <Text style={styles.choosePhotoText}>📷 Choose Photo</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Edit Form */}
@@ -117,23 +166,36 @@ export default function EditProfileScreen({ navigation }: any) {
             />
           </View>
 
-          {/* Avatar URL Input - Optional */}
+          {/* Nickname Input */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Nickname</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your nickname"
+              placeholderTextColor={Colors.textSecondary}
+              value={nickname}
+              onChangeText={setNickname}
+              editable={!loading}
+            />
+          </View>
+
+          {/* Avatar URL Input - Optional, alternative to "Choose Photo" above */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Avatar URL</Text>
             <TextInput
               style={styles.input}
-              placeholder="Paste image URL (e.g., https://example.com/avatar.jpg)"
+              placeholder="Or paste an image URL (e.g., https://example.com/avatar.jpg)"
               placeholderTextColor={Colors.textSecondary}
               value={avatar}
               onChangeText={(text) => {
                 setAvatar(text);
                 setAvatarError(false);
               }}
-              editable={!loading}
+              editable={!loading && !uploadingAvatar}
               multiline
             />
             <Text style={styles.hint}>
-              Paste any direct image URL. Preview updates automatically.
+              Optional — only needed if you'd rather link an image than upload one.
             </Text>
           </View>
 
@@ -283,6 +345,19 @@ const styles = StyleSheet.create({
     color: Colors.white,
     ...Fonts.bold,
     fontSize: 32,
+  },
+  choosePhotoButton: {
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+  },
+  choosePhotoText: {
+    ...Fonts.semibold,
+    color: Colors.primary,
+    fontSize: 14,
   },
   formSection: {
     marginHorizontal: Spacing.md,

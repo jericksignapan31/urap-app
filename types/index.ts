@@ -5,6 +5,7 @@ export type UserRole = 'superadmin' | 'admin' | 'user';
 export interface User {
   id: string;
   name: string;
+  nickname?: string;
   email: string;
   role: UserRole;
   verified: boolean; // Must be approved by a superadmin before login is allowed

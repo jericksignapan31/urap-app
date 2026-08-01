@@ -11,6 +11,8 @@ import {
   Timestamp,
   arrayUnion,
   arrayRemove,
+  onSnapshot,
+  Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { Post } from '../types';
@@ -82,6 +84,45 @@ export const getAllPosts = async (currentUserId?: string): Promise<Post[]> => {
     console.error('Error getting posts:', error);
     throw error;
   }
+};
+
+// Listen for real-time updates to all posts, ordered by createdAt (newest first)
+export const subscribeToPosts = (
+  currentUserId: string | undefined,
+  onPosts: (posts: Post[]) => void,
+  onError?: (error: unknown) => void
+): Unsubscribe => {
+  const postsRef = collection(db, 'posts');
+  const q = query(postsRef, orderBy('createdAt', 'desc'));
+
+  return onSnapshot(
+    q,
+    (querySnapshot) => {
+      const posts: Post[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const likes = data.likes || [];
+        posts.push({
+          id: doc.id,
+          authorId: data.authorId,
+          author: data.author,
+          title: data.title,
+          content: data.content,
+          image: data.image,
+          createdAt: data.createdAt?.toDate?.().toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.().toISOString() || new Date().toISOString(),
+          commentsCount: data.commentsCount || 0,
+          likesCount: data.likesCount || 0,
+          liked: currentUserId ? likes.includes(currentUserId) : false,
+        } as Post);
+      });
+      onPosts(posts);
+    },
+    (error) => {
+      console.error('Error listening to posts:', error);
+      onError?.(error);
+    }
+  );
 };
 
 // Get a single post by ID

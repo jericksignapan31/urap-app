@@ -5,13 +5,15 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Image,
   ActivityIndicator,
   ScrollView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { createPost } from '../services/postService';
+import { uploadImageToCloudinary } from '../services/cloudinaryService';
 import { useUser } from '../context/UserContext';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
@@ -21,8 +23,26 @@ import Shadows from '../theme/shadows';
 
 export default function CreatePostScreen({ navigation }: any) {
   const [content, setContent] = useState('');
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { currentUser } = useUser();
+
+  const handlePickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      alert('Please allow access to your photos to add an image');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
 
   const handleCreatePost = async () => {
     if (!content.trim()) {
@@ -38,6 +58,8 @@ export default function CreatePostScreen({ navigation }: any) {
     setLoading(true);
 
     try {
+      const uploadedImageUrl = imageUri ? await uploadImageToCloudinary(imageUri) : undefined;
+
       // Create post in Firebase with current user data
       await createPost(
         currentUser.id,
@@ -45,15 +67,18 @@ export default function CreatePostScreen({ navigation }: any) {
         currentUser.role,
         currentUser.avatar || 'https://via.placeholder.com/50',
         content.split('\n')[0] || 'Announcement',
-        content
+        content,
+        uploadedImageUrl
       );
 
       alert('Post created successfully!');
       setContent('');
+      setImageUri(null);
       navigation.goBack();
     } catch (error) {
       console.error('Error creating post:', error);
-      alert('Failed to create post');
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to create post: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -105,7 +130,34 @@ export default function CreatePostScreen({ navigation }: any) {
           multiline
           editable={!loading}
         />
+
+        {imageUri && (
+          <View style={styles.imagePreviewContainer}>
+            <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+            <TouchableOpacity
+              style={styles.removeImageButton}
+              onPress={() => setImageUri(null)}
+              disabled={loading}
+            >
+              <Text style={styles.removeImageText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
+
+      {/* Add to Post */}
+      <View style={styles.addToPost}>
+        <Text style={styles.addToPostLabel}>Add to your post</Text>
+        <View style={styles.actionIcons}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handlePickImage}
+            disabled={loading}
+          >
+            <Text style={styles.icon}>🖼️</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Post Button Footer */}
       <View style={styles.footerSection}>

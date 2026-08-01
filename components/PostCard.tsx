@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Pressable,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { Post } from '../types';
 import Colors from '../theme/colors';
@@ -30,6 +32,14 @@ export default function PostCard({
   const [isLiked, setIsLiked] = useState(post.liked || false);
   const [likeCount, setLikeCount] = useState(post.likesCount || 0);
   const [avatarError, setAvatarError] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+
+  // Re-sync local like state when fresh data arrives from the real-time
+  // posts subscription (e.g. another user liked this post).
+  useEffect(() => {
+    setIsLiked(post.liked || false);
+    setLikeCount(post.likesCount || 0);
+  }, [post.liked, post.likesCount]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -95,10 +105,12 @@ export default function PostCard({
 
       {/* Image */}
       {post.image && (
-        <Image
-          source={{ uri: post.image }}
-          style={styles.image}
-        />
+        <TouchableOpacity activeOpacity={0.9} onPress={() => setPreviewVisible(true)}>
+          <Image
+            source={{ uri: post.image }}
+            style={styles.image}
+          />
+        </TouchableOpacity>
       )}
 
       {/* Engagement Stats */}
@@ -133,6 +145,33 @@ export default function PostCard({
           <Text style={styles.actionText}>💬 Comment</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Full-screen Image Preview */}
+      {post.image && (
+        <Modal
+          visible={previewVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPreviewVisible(false)}
+        >
+          <Pressable
+            style={styles.previewOverlay}
+            onPress={() => setPreviewVisible(false)}
+          >
+            <TouchableOpacity
+              style={styles.previewCloseButton}
+              onPress={() => setPreviewVisible(false)}
+            >
+              <Text style={styles.previewCloseText}>✕</Text>
+            </TouchableOpacity>
+            <Image
+              source={{ uri: post.image }}
+              style={styles.previewImage}
+              resizeMode="contain"
+            />
+          </Pressable>
+        </Modal>
+      )}
     </Pressable>
   );
 }
@@ -268,5 +307,31 @@ const styles = StyleSheet.create({
   },
   actionTextActive: {
     color: Colors.primary,
+  },
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewImage: {
+    width: Dimensions.get('window').width,
+    height: '80%',
+  },
+  previewCloseButton: {
+    position: 'absolute',
+    top: Spacing.xl,
+    right: Spacing.md,
+    zIndex: 1,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewCloseText: {
+    color: Colors.white,
+    fontSize: 20,
   },
 });

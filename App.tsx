@@ -1,10 +1,13 @@
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './navigation/AppNavigator';
 import { UserProvider } from './context/UserContext';
 
 export default function App() {
   return (
-    <UserProvider>
-      <AppNavigator />
-    </UserProvider>
+    <SafeAreaProvider>
+      <UserProvider>
+        <AppNavigator />
+      </UserProvider>
+    </SafeAreaProvider>
   );
 }
