@@ -6,6 +6,7 @@ import { mockUsers } from '../utils/mockData';
 
 // Create or update user in Firestore
 export const createUserInFirestore = async (userData: User) => {
+  console.log('[createUserInFirestore] calling setDoc...', new Date().toISOString());
   try {
     const userDocRef = doc(db, 'users', userData.id);
     await setDoc(userDocRef, {
@@ -19,10 +20,10 @@ export const createUserInFirestore = async (userData: User) => {
       urapPosition: userData.urapPosition || null,
       createdAt: userData.createdAt,
     });
-    console.log('User created in Firestore:', userData.email);
+    console.log('[createUserInFirestore] setDoc resolved:', userData.email, new Date().toISOString());
     return true;
   } catch (error) {
-    console.error('Error creating user in Firestore:', error);
+    console.error('[createUserInFirestore] setDoc rejected:', error, new Date().toISOString());
     throw error;
   }
 };

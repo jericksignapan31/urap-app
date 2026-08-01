@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig';
 import { createUserInFirestore } from '../services/userService';
+import { useAlert } from '../context/AlertContext';
+import { useUser } from '../context/UserContext';
 import { User } from '../types';
 import Colors from '../theme/colors';
 import Fonts from '../theme/fonts';
@@ -20,6 +21,8 @@ import Radius from '../theme/radius';
 import Shadows from '../theme/shadows';
 
 export default function RegisterScreen({ navigation }: any) {
+  const { showAlert } = useAlert();
+  const { setAuthListenerPaused } = useUser();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [clubName, setClubName] = useState('');
@@ -37,28 +40,42 @@ export default function RegisterScreen({ navigation }: any) {
       !password ||
       !confirmPassword
     ) {
-      alert('Please fill in all fields');
+      showAlert({ type: 'warning', title: 'Missing Fields', message: 'Please fill in all fields' });
       return;
     }
 
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      showAlert({ type: 'error', title: 'Password Mismatch', message: 'Passwords do not match' });
       return;
     }
 
     if (password.length < 6) {
-      alert('Password must be at least 6 characters');
+      showAlert({
+        type: 'error',
+        title: 'Weak Password',
+        message: 'Password must be at least 6 characters',
+      });
       return;
     }
 
     setLoading(true);
 
+    // While this screen owns the just-created account's auth session
+    // (creating it, writing its profile, signing it back out), UserContext's
+    // own auth listener must not also react to the same sign-in/out — it was
+    // doing a concurrent read of the same not-yet-existing profile doc that
+    // this screen was writing, and that race is the leading suspect for the
+    // write hanging indefinitely.
+    setAuthListenerPaused(true);
+
     try {
+      console.log('[Register] 1/4 creating auth account...', new Date().toISOString());
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email.trim(),
         password
       );
+      console.log('[Register] 1/4 done, uid:', userCredential.user.uid, new Date().toISOString());
 
       const newUser: User = {
         id: userCredential.user.uid,
@@ -71,29 +88,38 @@ export default function RegisterScreen({ navigation }: any) {
         createdAt: new Date().toISOString(),
       };
 
+      console.log('[Register] 2/4 writing profile to Firestore...', new Date().toISOString());
       await createUserInFirestore(newUser);
+      console.log('[Register] 2/4 done', new Date().toISOString());
 
-      // createUserWithEmailAndPassword signs the new account in automatically.
-      // Don't sign out here: UserContext's onAuthStateChanged listener already
-      // signs out any unverified account as soon as it sees the profile, and
-      // calling signOut() again concurrently from here caused it to hang.
-      Alert.alert(
-        'Account Created',
-        'A superadmin needs to verify your account before you can log in.',
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
-      );
+      console.log('[Register] 3/4 signing out the new (unverified) session...', new Date().toISOString());
+      await auth.signOut();
+      console.log('[Register] 3/4 done', new Date().toISOString());
+
+      console.log('[Register] 4/4 showing success alert', new Date().toISOString());
+      showAlert({
+        type: 'success',
+        title: 'Account Created',
+        message: 'A superadmin needs to verify your account before you can log in.',
+        buttons: [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
+      });
     } catch (err: any) {
-      console.error('Registration error:', err);
+      console.error('[Register] Registration error:', err, new Date().toISOString());
       if (err.code === 'auth/email-already-in-use') {
-        alert('An account with this email already exists');
+        showAlert({ type: 'error', title: 'Registration Failed', message: 'An account with this email already exists' });
       } else if (err.code === 'auth/invalid-email') {
-        alert('Invalid email format');
+        showAlert({ type: 'error', title: 'Registration Failed', message: 'Invalid email format' });
       } else if (err.code === 'auth/weak-password') {
-        alert('Password is too weak');
+        showAlert({ type: 'error', title: 'Registration Failed', message: 'Password is too weak' });
       } else {
-        alert(err.message || 'Registration failed. Please try again.');
+        showAlert({
+          type: 'error',
+          title: 'Registration Failed',
+          message: err.message || 'Please try again.',
+        });
       }
     } finally {
+      setAuthListenerPaused(false);
       setLoading(false);
     }
   };

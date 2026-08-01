@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, ReactNode } from 'react';
 import { User } from '../types';
 import { auth, db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
@@ -9,6 +9,7 @@ interface UserContextType {
   setCurrentUser: (user: User | null) => void;
   logout: () => Promise<void>;
   fetchUserProfile: (uid: string) => Promise<User | null>;
+  setAuthListenerPaused: (paused: boolean) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -16,21 +17,40 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  // Screens that manage their own auth transition (e.g. RegisterScreen, which
+  // signs a brand-new account back out itself right after creating its
+  // profile doc) set this so this listener doesn't also react to that same
+  // sign-in/out and race it with a concurrent read of the same document.
+  const authListenerPausedRef = useRef(false);
+
+  const setAuthListenerPaused = (paused: boolean) => {
+    authListenerPausedRef.current = paused;
+  };
 
   useEffect(() => {
     // Check if user is logged in on app load
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      console.log('[UserContext] onAuthStateChanged fired. uid:', firebaseUser?.uid ?? null, 'paused:', authListenerPausedRef.current);
+
+      if (authListenerPausedRef.current) {
+        console.log('[UserContext] listener paused, skipping');
+        return;
+      }
+
       if (firebaseUser) {
         try {
+          console.log('[UserContext] fetching profile for', firebaseUser.uid);
           const userProfile = await fetchUserProfile(firebaseUser.uid);
+          console.log('[UserContext] profile fetched:', userProfile ? userProfile.email : null, 'verified:', userProfile?.verified);
           if (userProfile && !userProfile.verified) {
+            console.log('[UserContext] unverified, signing out');
             await auth.signOut();
             setCurrentUser(null);
           } else {
             setCurrentUser(userProfile);
           }
         } catch (error) {
-          console.error('Error loading user profile:', error);
+          console.error('[UserContext] Error loading user profile:', error);
         }
       } else {
         setCurrentUser(null);
@@ -67,7 +87,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <UserContext.Provider value={{ currentUser, loading, setCurrentUser, logout, fetchUserProfile }}>
+    <UserContext.Provider
+      value={{ currentUser, loading, setCurrentUser, logout, fetchUserProfile, setAuthListenerPaused }}
+    >
       {children}
     </UserContext.Provider>
   );
